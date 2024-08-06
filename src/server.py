@@ -13,16 +13,13 @@ client_status = "This is a status !"
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
-# Permet de sauvegarder le gamemode et la map choisi dans une variable global
-save_gamemode = None
-save_map = None
-
 
 class startDraft_View(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
         self.coin_flip_phase = None
         self.add_item(gamemode_Select()) # à supprimer
+        self.add_item(maphotzone_Select())  # à supprimer
 
     @discord.ui.button(label="Reject", style=discord.ButtonStyle.red)
     async def reject(self, interaction: discord.Interaction, Button: discord.ui.Button):
@@ -52,108 +49,108 @@ class startDraft_View(discord.ui.View):
 
 class gamemode_Select(discord.ui.Select):
     def __init__(self):
+        self.selected_gamemode = None   # Permet de stocker le nom du mode sélectionnée
         options=[
-            discord.SelectOption(label="Gem Grab", emoji="<:gem_grab_icon:1269380099975811145>"),
-            discord.SelectOption(label="Heist", emoji="<:heist_icon:1269380132674601074>"),
-            discord.SelectOption(label="Bounty", emoji="<:bounty_icon:1269380154162155550>"),
-            discord.SelectOption(label="Brawl Ball", emoji="<:brawl_ball_icon:1269380142753382531>"),
-            discord.SelectOption(label="Hot Zone", emoji="<:hot_zone_icon:1269380163380973598>"),
-            discord.SelectOption(label="Knockout", emoji="<:knock_out_icon:1269380175494254662>"),
+            discord.SelectOption(label="Gem Grab", emoji="<:gem_grab_icon:1270412969179742319>"),
+            discord.SelectOption(label="Heist", emoji="<:heist_icon:1270413044757037086>"),
+            discord.SelectOption(label="Bounty", emoji="<:bounty_icon:1270412997663264838>"),
+            discord.SelectOption(label="Brawl Ball", emoji="<:brawl_ball_icon:1270412985659293747>"),
+            discord.SelectOption(label="Hot Zone", emoji="<:hot_zone_icon:1270413010036457482>"),
+            discord.SelectOption(label="Knockout", emoji="<:knock_out_icon:1270413017602855065>"),
         ]
         super().__init__(placeholder="Game Modes", options=options)
 
     async def callback(self, interaction: discord.Interaction):
-        global save_gamemode
-        save_gamemode = self.values[0]
+        self.selected_gamemode = self.values[0]
 
 
 class mapgemgrab_Select(discord.ui.Select):
     def __init__(self):
+        self.selected_map = None    # Permet de stocker le nom de la map sélectionnée
         options=[
-            discord.SelectOption(label="Hard Rock Mine", emoji="<:gem_grab_icon:1269380099975811145>"),
-            discord.SelectOption(label="Double Swoosh", emoji="<:gem_grab_icon:1269380099975811145>"),
-            discord.SelectOption(label="Undermine", emoji="<:gem_grab_icon:1269380099975811145>"),
+            discord.SelectOption(label="Hard Rock Mine", emoji="<:gem_grab_icon:1270412969179742319>"),
+            discord.SelectOption(label="Double Swoosh", emoji="<:gem_grab_icon:1270412969179742319>"),
+            discord.SelectOption(label="Undermine", emoji="<:gem_grab_icon:1270412969179742319>"),
         ]
-        super.__init__(placeholder="Gem Grab Maps", options=options)
+        super().__init__(placeholder="Gem Grab Maps", options=options)
 
     async def callback(self, interaction: discord.Interaction):
-        global save_map
-        save_map = self.values[0]
+        self.selected_map = self.values[0]
 
 
 class mapheist_Select(discord.ui.Select):
     def __init__(self):
+        self.selected_map = None
         options=[
-            discord.SelectOption(label="Kaboom Canyon", emoji="<:heist_icon:1269380132674601074>"),
-            discord.SelectOption(label="Hot Potato", emoji="<:heist_icon:1269380132674601074>"),
-            discord.SelectOption(label="Safe Zone", emoji="<:heist_icon:1269380132674601074>"),
+            discord.SelectOption(label="Kaboom Canyon", emoji="<:heist_icon:1270413044757037086>"),
+            discord.SelectOption(label="Hot Potato", emoji="<:heist_icon:1270413044757037086>"),
+            discord.SelectOption(label="Safe Zone", emoji="<:heist_icon:1270413044757037086>"),
         ]
 
-        super.__init__(placeholder="Heist Maps", options=options)
+        super().__init__(placeholder="Heist Maps", options=options)
 
     async def callback(self, interaction: discord.Interaction):
-        global save_map
-        save_map = self.values[0]
+        self.selected_map = self.values[0]
 
 
-class mapgemgrab_Select(discord.ui.Select):
+class mapbounty_Select(discord.ui.Select):
     def __init__(self):
+        self.selected_map = None
         options=[
-            discord.SelectOption(label="", emoji=""),
-            discord.SelectOption(label="", emoji=""),
-            discord.SelectOption(label="", emoji=""),
+            discord.SelectOption(label="Shooting Star", emoji="<:bounty_icon:1270412997663264838>"),
+            discord.SelectOption(label="Canal Grande", emoji="<:bounty_icon:1270412997663264838>"),
+            discord.SelectOption(label="Hideout", emoji="<:bounty_icon:1270412997663264838>"),
         ]
 
-        super.__init__(placeholder="Maps", options=options)
+        super().__init__(placeholder="Bounty Maps", options=options)
 
     async def callback(self, interaction: discord.Interaction):
-        global save_map
-        save_map = self.values[0]
+        self.selected_map = self.values[0]
 
 
-class mapgemgrab_Select(discord.ui.Select):
+class mapbrawlball_Select(discord.ui.Select):
     def __init__(self):
+        self.selected_map = None
         options=[
-            discord.SelectOption(label="", emoji=""),
-            discord.SelectOption(label="", emoji=""),
-            discord.SelectOption(label="", emoji=""),
+            discord.SelectOption(label="Center Stage", emoji="<:brawl_ball_icon:1270412985659293747>"),
+            discord.SelectOption(label="Pinball Dreams", emoji="<:brawl_ball_icon:1270412985659293747>"),
+            discord.SelectOption(label="Penalty Kick", emoji="<:brawl_ball_icon:1270412985659293747>"),
         ]
 
-        super.__init__(placeholder="Maps", options=options)
+        super().__init__(placeholder="Brawl Ball Maps", options=options)
 
     async def callback(self, interaction: discord.Interaction):
-        global save_map
-        save_map = self.values[0]
+        self.selected_map = self.values[0]
 
 
-class mapgemgrab_Select(discord.ui.Select):
+class maphotzone_Select(discord.ui.Select):
     def __init__(self):
+        self.selected_map = None
         options=[
-            discord.SelectOption(label="", emoji=""),
-            discord.SelectOption(label="", emoji=""),
-            discord.SelectOption(label="", emoji=""),
+            discord.SelectOption(label="Dueling Beetles", emoji="<:hot_zone_icon:1270413010036457482>"),
+            discord.SelectOption(label="Open Business", emoji="<:hot_zone_icon:1270413010036457482>"),
+            discord.SelectOption(label="Parallel Plays", emoji="<:hot_zone_icon:1270413010036457482>"),
         ]
 
-        super.__init__(placeholder="Maps", options=options)
+        super().__init__(placeholder="Hot Zone Maps", options=options)
 
     async def callback(self, interaction: discord.Interaction):
-        global save_map
-        save_map = self.values[0]
+        self.selected_map = self.values[0]
 
 
-class mapgemgrab_Select(discord.ui.Select):
+class mapknockout_Select(discord.ui.Select):
     def __init__(self):
+        self.selected_map = None
         options=[
-            discord.SelectOption(label="", emoji=""),
-            discord.SelectOption(label="", emoji=""),
-            discord.SelectOption(label="", emoji=""),
+            discord.SelectOption(label="Belle's Rock", emoji="<:knock_out_icon:1270413017602855065>"),
+            discord.SelectOption(label="Out in the Open", emoji="<:knock_out_icon:1270413017602855065>"),
+            discord.SelectOption(label="Flaring Phoenix", emoji="<:knock_out_icon:1270413017602855065>"),
         ]
 
-        super.__init__(placeholder="Maps", options=options)
+        super().__init__(placeholder="Knockout Maps", options=options)
 
     async def callback(self, interaction: discord.Interaction):
-        global save_map
-        save_map = self.values[0]
+        self.selected_map = self.values[0]
 
 
 
