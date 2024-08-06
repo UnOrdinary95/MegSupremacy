@@ -224,3 +224,5 @@ async def start_draft(interaction: discord.Interaction, user: discord.Member):
 
 # Démarrage du bot avec le token récupéré depuis les variables d'environnement
 client.run(os.getenv("TOKEN"))
+
+# Test commit
