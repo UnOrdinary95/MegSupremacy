@@ -1,4 +1,5 @@
 import os
+import json
 import discord
 from discord import app_commands
 import asyncio
@@ -13,13 +14,20 @@ client_status = "This is a status !"
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
+# Chemin relatif vers le fichier JSON
+path = os.path.join("data","map.json")
+
+# Charge le fichier JSON
+with open(path, "r") as file:
+    data = json.load(file)
+
 
 class startDraft_View(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
         self.coin_flip_phase = None
         self.add_item(gamemode_Select()) # à supprimer
-        self.add_item(maphotzone_Select())  # à supprimer
+        self.add_item(map_Select()) # à supprimer
 
     @discord.ui.button(label="Reject", style=discord.ButtonStyle.red)
     async def reject(self, interaction: discord.Interaction, Button: discord.ui.Button):
@@ -47,112 +55,36 @@ class startDraft_View(discord.ui.View):
             await interaction.followup.send(f"Only {PLAYER_2.global_name} can answer to this message !", ephemeral=True)
 
 
-class mapChoice_View()
 
 class gamemode_Select(discord.ui.Select):
+    selected_gamemode = "Hot Zone"   # Permet de stocker le nom du mode sélectionnée
     def __init__(self):
-        self.selected_gamemode = None   # Permet de stocker le nom du mode sélectionnée
         options=[
-            discord.SelectOption(label="Gem Grab", emoji="<:gem_grab_icon:1270412969179742319>"),
-            discord.SelectOption(label="Heist", emoji="<:heist_icon:1270413044757037086>"),
-            discord.SelectOption(label="Bounty", emoji="<:bounty_icon:1270412997663264838>"),
-            discord.SelectOption(label="Brawl Ball", emoji="<:brawl_ball_icon:1270412985659293747>"),
-            discord.SelectOption(label="Hot Zone", emoji="<:hot_zone_icon:1270413010036457482>"),
-            discord.SelectOption(label="Knockout", emoji="<:knock_out_icon:1270413017602855065>"),
+            discord.SelectOption(label="Gem Grab", emoji=data["Gem Grab"]["emoji"]),
+            discord.SelectOption(label="Heist", emoji=data["Heist"]["emoji"]),
+            discord.SelectOption(label="Bounty", emoji=data["Bounty"]["emoji"]),
+            discord.SelectOption(label="Brawl Ball", emoji=data["Brawl Ball"]["emoji"]),
+            discord.SelectOption(label="Hot Zone", emoji=data["Hot Zone"]["emoji"]),
+            discord.SelectOption(label="Knockout", emoji=data["Knockout"]["emoji"])
         ]
         super().__init__(placeholder="Game Modes", options=options)
 
     async def callback(self, interaction: discord.Interaction):
-        self.selected_gamemode = self.values[0]
+        gamemode_Select.selected_gamemode = self.values[0]
 
 
-class mapgemgrab_Select(discord.ui.Select):
+class map_Select(discord.ui.Select):
+    selected_map = "Dueling Beetles"     # Permet de stocker le nom de la map sélectionnée
     def __init__(self):
-        self.selected_map = None    # Permet de stocker le nom de la map sélectionnée
         options=[
-            discord.SelectOption(label="Hard Rock Mine", emoji="<:gem_grab_icon:1270412969179742319>"),
-            discord.SelectOption(label="Double Swoosh", emoji="<:gem_grab_icon:1270412969179742319>"),
-            discord.SelectOption(label="Undermine", emoji="<:gem_grab_icon:1270412969179742319>"),
+            discord.SelectOption(label=data[gamemode_Select.selected_gamemode]["maps"][0], emoji=data[gamemode_Select.selected_gamemode]["emoji"]),
+            discord.SelectOption(label=data[gamemode_Select.selected_gamemode]["maps"][1], emoji=data[gamemode_Select.selected_gamemode]["emoji"]),
+            discord.SelectOption(label=data[gamemode_Select.selected_gamemode]["maps"][2], emoji=data[gamemode_Select.selected_gamemode]["emoji"])
         ]
-        super().__init__(placeholder="Gem Grab Maps", options=options)
+        super().__init__(placeholder=data[gamemode_Select.selected_gamemode]["placeholder"], options=options)
 
     async def callback(self, interaction: discord.Interaction):
-        self.selected_map = self.values[0]
-
-
-class mapheist_Select(discord.ui.Select):
-    def __init__(self):
-        self.selected_map = None
-        options=[
-            discord.SelectOption(label="Kaboom Canyon", emoji="<:heist_icon:1270413044757037086>"),
-            discord.SelectOption(label="Hot Potato", emoji="<:heist_icon:1270413044757037086>"),
-            discord.SelectOption(label="Safe Zone", emoji="<:heist_icon:1270413044757037086>"),
-        ]
-
-        super().__init__(placeholder="Heist Maps", options=options)
-
-    async def callback(self, interaction: discord.Interaction):
-        self.selected_map = self.values[0]
-
-
-class mapbounty_Select(discord.ui.Select):
-    def __init__(self):
-        self.selected_map = None
-        options=[
-            discord.SelectOption(label="Shooting Star", emoji="<:bounty_icon:1270412997663264838>"),
-            discord.SelectOption(label="Canal Grande", emoji="<:bounty_icon:1270412997663264838>"),
-            discord.SelectOption(label="Hideout", emoji="<:bounty_icon:1270412997663264838>"),
-        ]
-
-        super().__init__(placeholder="Bounty Maps", options=options)
-
-    async def callback(self, interaction: discord.Interaction):
-        self.selected_map = self.values[0]
-
-
-class mapbrawlball_Select(discord.ui.Select):
-    def __init__(self):
-        self.selected_map = None
-        options=[
-            discord.SelectOption(label="Center Stage", emoji="<:brawl_ball_icon:1270412985659293747>"),
-            discord.SelectOption(label="Pinball Dreams", emoji="<:brawl_ball_icon:1270412985659293747>"),
-            discord.SelectOption(label="Penalty Kick", emoji="<:brawl_ball_icon:1270412985659293747>"),
-        ]
-
-        super().__init__(placeholder="Brawl Ball Maps", options=options)
-
-    async def callback(self, interaction: discord.Interaction):
-        self.selected_map = self.values[0]
-
-
-class maphotzone_Select(discord.ui.Select):
-    def __init__(self):
-        self.selected_map = None
-        options=[
-            discord.SelectOption(label="Dueling Beetles", emoji="<:hot_zone_icon:1270413010036457482>"),
-            discord.SelectOption(label="Open Business", emoji="<:hot_zone_icon:1270413010036457482>"),
-            discord.SelectOption(label="Parallel Plays", emoji="<:hot_zone_icon:1270413010036457482>"),
-        ]
-
-        super().__init__(placeholder="Hot Zone Maps", options=options)
-
-    async def callback(self, interaction: discord.Interaction):
-        self.selected_map = self.values[0]
-
-
-class mapknockout_Select(discord.ui.Select):
-    def __init__(self):
-        self.selected_map = None
-        options=[
-            discord.SelectOption(label="Belle's Rock", emoji="<:knock_out_icon:1270413017602855065>"),
-            discord.SelectOption(label="Out in the Open", emoji="<:knock_out_icon:1270413017602855065>"),
-            discord.SelectOption(label="Flaring Phoenix", emoji="<:knock_out_icon:1270413017602855065>"),
-        ]
-
-        super().__init__(placeholder="Knockout Maps", options=options)
-
-    async def callback(self, interaction: discord.Interaction):
-        self.selected_map = self.values[0]
+        map_Select.selected_map = self.values[0]        
 
 
 # Événement qui se déclenche lorsque le bot est prêt et connecté à Discord
@@ -167,7 +99,6 @@ async def on_ready():
     except Exception as e:
         print(e)
     
-
 
 async def cf_phase(message: discord.Message):
     begin_embed = discord.Embed(
