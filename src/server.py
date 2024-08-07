@@ -47,6 +47,8 @@ class startDraft_View(discord.ui.View):
             await interaction.followup.send(f"Only {PLAYER_2.global_name} can answer to this message !", ephemeral=True)
 
 
+class mapChoice_View()
+
 class gamemode_Select(discord.ui.Select):
     def __init__(self):
         self.selected_gamemode = None   # Permet de stocker le nom du mode sélectionnée
@@ -153,7 +155,6 @@ class mapknockout_Select(discord.ui.Select):
         self.selected_map = self.values[0]
 
 
-
 # Événement qui se déclenche lorsque le bot est prêt et connecté à Discord
 @client.event
 async def on_ready():
@@ -165,6 +166,7 @@ async def on_ready():
         print("Synchronization complete. Please reload Discord.")
     except Exception as e:
         print(e)
+    
 
 
 async def cf_phase(message: discord.Message):
