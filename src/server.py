@@ -6,6 +6,8 @@ import asyncio
 import random
 from enum import Enum
 
+PLAYER_1 = None
+PLAYER_2 = None
 
 # Définition des intents pour le bot Discord
 intents = discord.Intents.default()
@@ -22,6 +24,9 @@ path = os.path.join("data","map.json")
 with open(path, "r") as file:
     data = json.load(file)
 
+# Message initial
+message: discord.InteractionMessage
+
 
 class startDraft_View(discord.ui.View):
     def __init__(self):
@@ -30,6 +35,7 @@ class startDraft_View(discord.ui.View):
 
     @discord.ui.button(label="Reject", style=discord.ButtonStyle.red)
     async def reject(self, interaction: discord.Interaction, Button: discord.ui.Button):
+        global message, PLAYER_1, PLAYER_2
         # Supprime le message si le Joueur 2 clique sur "Reject"
         if (interaction.user.id == PLAYER_2.id):
             await interaction.message.delete()
@@ -44,6 +50,7 @@ class startDraft_View(discord.ui.View):
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.green)
     async def accept(self, interaction: discord.Interaction, Button: discord.ui.Button):
+        global message, PLAYER_1, PLAYER_2
         if (interaction.user.id == PLAYER_2.id):
             await interaction.response.defer()
 
@@ -54,112 +61,114 @@ class startDraft_View(discord.ui.View):
             await interaction.followup.send(f"Only {PLAYER_2.global_name} can answer to this message !", ephemeral=True)
 
 
-class mapSelectionState(Enum):
-    GAMEMODE = 1
-    MAP = 2
-    CONFIRM = 3
-
-
 class chooseMap_View(discord.ui.View):
+    class mapSelectionState(Enum):
+        GAMEMODE = 1
+        MAP = 2
+        CONFIRM = 3
+
     def __init__(self):
         super().__init__(timeout=None)
         self.selected_gamemode = None   # Permet de stocker le nom du mode sélectionnée
         self.selected_map = None        # Permet de stocker le nom de la map sélectionnée
-        self.state = mapSelectionState.GAMEMODE
-        self.update_view()
+        self.state = self.mapSelectionState.GAMEMODE
+
 
         self.gamemode_embed = discord.Embed(
             description="Please choose a game mode :"
         )
-
-    async def update_view(self, message: discord.Message):
+        self.map_embed = discord.Embed(
+            description="Please choose a map :"
+        )
+        self.confirm_embed = discord.Embed(
+            description=f"Do you choose {self.selected_map} ?"
+        )
+        
+    async def update_view(self):
+        global message
         self.clear_items()
-        if(self.state == mapSelectionState.GAMEMODE):
-            await message.edit(content=f"{PLAYER_1.mention} vs {PLAYER_2.mention}", embed=self.gamemode_embed)
-            self.add_item(gamemode_Select(self))
+        if(self.state == self.mapSelectionState.GAMEMODE):
+            self.add_item(self.gamemode_Select(self))
+            await message.edit(content=f"{PLAYER_1.mention} vs {PLAYER_2.mention}", embed=self.gamemode_embed, view=self)
+        elif(self.state == self.mapSelectionState.MAP):
+            self.add_item(self.map_Select(self))
+            self.add_item(self.return_Button(self))
+            await message.edit(content=f"{PLAYER_1.mention} vs {PLAYER_2.mention}", embed=self.map_embed, view=self)
+        elif(self.state == self.mapSelectionState.CONFIRM):
+            self.add_item(self.accept_Button(self))
+            self.add_item(self.decline_button(self))
+            await message.edit(content=f"{PLAYER_1.mention} vs {PLAYER_2.mention}", embed=self.confirm_embed, view=self)
 
 
-#   def update_view(self):
-#         self.clear_items()
-#         if self.state == SelectionState.GAMEMODE:
-#             self.add_item(self.GameModeSelect(self))
-#         elif self.state == SelectionState.MAP:
-#             self.add_item(self.MapSelect(self))
-#             self.add_item(self.ReturnButton(self))
-#         elif self.state == SelectionState.CONFIRM:
-#             self.add_item(self.AcceptMapButton(self))
-#             self.add_item(self.DeclineMapButton(self))
+    class gamemode_Select(discord.ui.Select):
+        def __init__(self, parent):
+            self.parent = parent
+            options=[
+                discord.SelectOption(label="Gem Grab", emoji=data["Gem Grab"]["emoji"]),
+                discord.SelectOption(label="Heist", emoji=data["Heist"]["emoji"]),
+                discord.SelectOption(label="Bounty", emoji=data["Bounty"]["emoji"]),
+                discord.SelectOption(label="Brawl Ball", emoji=data["Brawl Ball"]["emoji"]),
+                discord.SelectOption(label="Hot Zone", emoji=data["Hot Zone"]["emoji"]),
+                discord.SelectOption(label="Knockout", emoji=data["Knockout"]["emoji"])
+            ]
+            super().__init__(placeholder="Game Modes", options=options)
 
-        class gamemode_Select(discord.ui.Select):
-            def __init__(self, parent):
-                self.parent = parent
-                options=[
-                    discord.SelectOption(label="Gem Grab", emoji=data["Gem Grab"]["emoji"]),
-                    discord.SelectOption(label="Heist", emoji=data["Heist"]["emoji"]),
-                    discord.SelectOption(label="Bounty", emoji=data["Bounty"]["emoji"]),
-                    discord.SelectOption(label="Brawl Ball", emoji=data["Brawl Ball"]["emoji"]),
-                    discord.SelectOption(label="Hot Zone", emoji=data["Hot Zone"]["emoji"]),
-                    discord.SelectOption(label="Knockout", emoji=data["Knockout"]["emoji"])
-                ]
-                super().__init__(placeholder="Game Modes", options=options)
-
-            async def callback(self, interaction: discord.Interaction):
-                self.parent.selected_gamemode = self.values[0]
-                self.parent.state = mapSelectionState.MAP
-                await self.parent.update_view()
-                await interaction.response.edit_message(view=self.parent)
-
-          
-        class map_Select(discord.ui.Select):
-            def __init__(self, parent):
-                self.parent = parent
-                options=[
-                    discord.SelectOption(label=data[self.parent.selected_gamemode]["maps"][0], emoji=data[self.parent.selected_gamemode]["emoji"]),
-                    discord.SelectOption(label=data[self.parent.selected_gamemode]["maps"][1], emoji=data[self.parent.selected_gamemode]["emoji"]),
-                    discord.SelectOption(label=data[self.parent.selected_gamemode]["maps"][2], emoji=data[self.parent.selected_gamemode]["emoji"])
-                ]
-                super().__init__(placeholder=data[self.parent.selected_gamemode]["placeholder"], options=options)
-
-            async def callback(self, interaction: discord.Interaction):
-                self.parent.selected_map = self.values[0]
-                self.parent.state = mapSelectionState.CONFIRM
-                await self.parent.update_view()
-                await interaction.response.edit_message(view=self.parent)
+        async def callback(self, interaction: discord.Interaction):
+            await interaction.response.defer()
+            self.parent.selected_gamemode = self.values[0]
+            self.parent.state = self.parent.mapSelectionState.MAP
+            await self.parent.update_view()
 
         
-        class return_Button(discord.ui.Button):
-            def __init__(self, parent):
-                self.parent = parent
-                super().__init__(label="Return", style=discord.ButtonStyle.gray)
+    class map_Select(discord.ui.Select):
+        def __init__(self, parent):
+            self.parent = parent
+            print(f"Mode choisi 2 : {self.parent.selected_gamemode}")
+            options=[
+                discord.SelectOption(label=data[self.parent.selected_gamemode]["maps"][0], emoji=data[self.parent.selected_gamemode]["emoji"]),
+                discord.SelectOption(label=data[self.parent.selected_gamemode]["maps"][1], emoji=data[self.parent.selected_gamemode]["emoji"]),
+                discord.SelectOption(label=data[self.parent.selected_gamemode]["maps"][2], emoji=data[self.parent.selected_gamemode]["emoji"])
+            ]
+            super().__init__(placeholder=data[self.parent.selected_gamemode]["placeholder"], options=options)
 
-            async def callback(self, interaction: discord.Interaction):
-                self.parent.state = mapSelectionState.GAMEMODE
-                await self.parent.update_view()
-                await interaction.response.edit_message(view=self.parent)
-
-
-        class accept_Button(discord.ui.Button):
-            def __init__(self, parent):
-                self.parent = parent
-                super().__init__(label="Accept Map", style=discord.ButtonStyle.blurple)
-
-            async def callback(self, interaction: discord.Interaction):
-                await interaction.response.defer()
-                await interaction.followup.send(f"Map '{self.parent.selected_map}' accepted!")
-        
-
-        class decline_button(discord.ui.Button):
-            def __init__(self, parent):
-                self.parent = parent
-                super().__init__(label="Decline Map", style=discord.ButtonStyle.danger)
-
-            async def callback(self, interaction: discord.Interaction):
-                self.parent.state = mapSelectionState.GAMEMODE
-                await self.parent.update_view()
-                await interaction.response.edit_message(view=self.parent)
+        async def callback(self, interaction: discord.Interaction):
+            await interaction.response.defer()
+            self.parent.selected_map = self.values[0]
+            self.parent.state = self.parent.mapSelectionState.CONFIRM
+            await self.parent.update_view()
 
     
-    
+    class return_Button(discord.ui.Button):
+        def __init__(self, parent):
+            self.parent = parent
+            super().__init__(label="Return", style=discord.ButtonStyle.gray)
+
+        async def callback(self, interaction: discord.Interaction):
+            await interaction.response.defer()
+            self.parent.state = self.parent.mapSelectionState.GAMEMODE
+            await self.parent.update_view()
+
+
+    class accept_Button(discord.ui.Button):
+        def __init__(self, parent):
+            self.parent = parent 
+            super().__init__(label="Accept Map", style=discord.ButtonStyle.blurple)
+
+        async def callback(self, interaction: discord.Interaction):
+            await interaction.response.defer()
+            pass
+
+
+    class decline_button(discord.ui.Button):
+        def __init__(self, parent):
+            self.parent = parent
+            super().__init__(label="Decline Map", style=discord.ButtonStyle.danger)
+
+        async def callback(self, interaction: discord.Interaction):
+            await interaction.response.defer()
+            self.parent.state = self.parent.mapSelectionState.GAMEMODE
+            await self.parent.update_view()
+
 
 # Événement qui se déclenche lorsque le bot est prêt et connecté à Discord
 @client.event
@@ -172,9 +181,10 @@ async def on_ready():
         print("Synchronization complete. Please reload Discord.")
     except Exception as e:
         print(e)
-    
+
 
 async def cf_phase(message: discord.Message):
+    #### OBSOLETE
     begin_embed = discord.Embed(
         description="The draft is about to start, please wait..."
     )
@@ -199,16 +209,17 @@ async def cf_phase(message: discord.Message):
                       
 @tree.command(name="start_draft", description="This is a description...")
 async def start_draft(interaction: discord.Interaction, user: discord.Member):
-    global PLAYER_1, PLAYER_2
+    global message, PLAYER_1, PLAYER_2
     PLAYER_1 = interaction.user
     PLAYER_2 = user
+    print(f"Joueur 1 : {PLAYER_1}\nJoueur 2 : {PLAYER_2} ")
 
     start_embed = discord.Embed(
         title="Invitation",
         description=f"{interaction.user.mention} wants to practice his drafting skills with you !"
     )
+    
     view = startDraft_View()
-
     await interaction.response.send_message(content=user.mention, embed=start_embed, view=view)
     message = await interaction.original_response()
 
@@ -218,8 +229,19 @@ async def start_draft(interaction: discord.Interaction, user: discord.Member):
         await message.edit(content="The invitation has timed out. ", view=None)
 
     if(view.coin_flip_phase == True):
-        print("CF PHASE")
-        await cf_phase(message)
+        print("TEST CHOIX DE MAP")
+        print(type(chooseMap_View))
+        await message.edit(view=None)
+        view = chooseMap_View()
+        await message.edit(view=view)
+        print("//// Test message début :")
+        print(message)
+        print("Test message fin ////////")
+        global test
+        test = 18
+        print(f"TEST = {test}")
+        await view.update_view()
+        # await message.edit(content="Test", view=chooseMap_View(message))
     elif(view.coin_flip_phase == False):
         print("Draft rejected.")
     else:
