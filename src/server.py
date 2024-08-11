@@ -334,6 +334,35 @@ async def start_draft(interaction: discord.Interaction, user: discord.Member):
         sys.exit("\nSomething unexpected happened.")
 
 
+@tree.command(name="timer", description="Start a countdown timer")
+async def timer(interaction: discord.Interaction):
+    time = 60
+    timer_embed = discord.Embed(
+        title="Timer",
+        description=f"{time} seconds remaining"
+    )
+    
+    await interaction.response.send_message(embed=timer_embed)
+    msg = await interaction.original_response()
+
+    while time > 0:
+        await asyncio.sleep(1)
+        time -= 1
+        # Update only if the time has changed
+        new_embed = discord.Embed(
+            title="Timer",
+            description=f"{time} seconds remaining"
+        )
+        await msg.edit(embed=new_embed)
+
+    # Notify when the timer is done
+    done_embed = discord.Embed(
+        title="Timer",
+        description="Time's up!",
+        color=discord.Color.red()
+    )
+    await msg.edit(embed=done_embed)
+
 
 # Démarrage du bot avec le token récupéré depuis les variables d'environnement
 client.run(os.getenv("TOKEN"))
