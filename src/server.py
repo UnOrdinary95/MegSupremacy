@@ -6,7 +6,7 @@ from discord import app_commands
 import asyncio
 import random
 from enum import Enum
-
+from datetime import datetime, timedelta
 
 # Définition des intents pour le bot Discord
 intents = discord.Intents.default()
@@ -27,17 +27,32 @@ with open(path, "r") as file:
 message: discord.InteractionMessage
 
 
-class player():
+class Player():
     def __init__(self, user: discord.Member):
         self.user = user
         self.coin_flip = self.perform_coin_flip()
+        self.has_first_pick = None
     
     def perform_coin_flip(self):
         # Simule un pile ou face, retourne 0 ou 1
         return random.randint(0, 1)
+    
+    @classmethod
+    def get_first_pick(cls, player1, player2):
+        if player1.has_first_pick == True:
+            return player1
+        else:
+            return player2
+    
+    @classmethod
+    def get_last_pick(cls, player1, player2):
+        if player1.has_first_pick == False:
+            return player1
+        else:
+            return player2
 
 
-class startDraft_View(discord.ui.View):
+class StartDraft_View(discord.ui.View):
     global message, player1, player2
     
     def __init__(self):
@@ -72,10 +87,10 @@ class startDraft_View(discord.ui.View):
             await interaction.followup.send(f"Only {player2.user.nick} can click on this button !", ephemeral=True)
 
 
-class chooseMap_View(discord.ui.View):
+class ChooseMap_View(discord.ui.View):
     global message, player1, player2
 
-    class mapSelectionState(Enum):
+    class MapSelectionState(Enum):
         GAMEMODE = 1
         MAP = 2
         CONFIRM = 3
@@ -86,9 +101,9 @@ class chooseMap_View(discord.ui.View):
         self.selected_gamemode = None   # Permet de stocker le nom du mode sélectionnée
         self.selected_map = None        # Permet de stocker le nom de la map sélectionnée
         self.map_id = -1                # Permet de stocker l'id de la map (Permettant de savoir easily quel map correspond à quel path)
-        self.attachments = None         # Permet de stocker le png de la map
+        self.attachments = []         # Permet de stocker le png de la map
         self.img_name = None            # Permet de stocker le nom du png
-        self.state = self.mapSelectionState.GAMEMODE
+        self.state = self.MapSelectionState.GAMEMODE
         self.is_ended = False
         
         self.gamemode_embed = discord.Embed(
@@ -103,18 +118,18 @@ class chooseMap_View(discord.ui.View):
         
     async def update_view(self):
         self.clear_items()
-        if(self.state == self.mapSelectionState.GAMEMODE):
+        if(self.state == self.MapSelectionState.GAMEMODE):
             print("'choose_map' state : GAMEMODE")
 
-            self.add_item(self.gamemode_Select(self))
+            self.add_item(self.Gamemode_Select(self))
             await message.edit(content=f"{player1.user.mention} vs {player2.user.mention}", embed=self.gamemode_embed, view=self, attachments=[])
-        elif(self.state == self.mapSelectionState.MAP):
+        elif(self.state == self.MapSelectionState.MAP):
             print("'choose_map' state : MAP")
 
-            self.add_item(self.map_Select(self))
-            self.add_item(self.return_Button(self))
+            self.add_item(self.Map_Select(self))
+            self.add_item(self.Return_Button(self))
             await message.edit(content=f"{player1.user.mention} vs {player2.user.mention}", embed=self.map_embed, view=self, attachments=[])
-        elif(self.state == self.mapSelectionState.CONFIRM):
+        elif(self.state == self.MapSelectionState.CONFIRM):
             print("'choose_map' state : CONFIRM")
 
             self.confirm_embed = discord.Embed(
@@ -122,17 +137,19 @@ class chooseMap_View(discord.ui.View):
             )
             img_path = data[self.selected_gamemode]["maps"][self.map_id]["path"]
             self.img_name = os.path.basename(img_path)
-            file = discord.File(img_path, filename=self.img_name)
+            # file = discord.File(img_path, filename=self.img_name)
             # Assurez-vous que file est dans une liste
-            self.attachments = [file]
+            # self.attachments = [file]
+            self.attachments = [discord.File(img_path, filename=self.img_name)]
+
             self.confirm_embed.set_image(url=f"attachment://{self.img_name}")
 
-            self.add_item(self.accept_Button(self))
-            self.add_item(self.decline_button(self))
+            self.add_item(self.Accept_Button(self))
+            self.add_item(self.Decline_button(self))
             await message.edit(content=f"{player1.user.mention} vs {player2.user.mention}", embed=self.confirm_embed, view=self, attachments=self.attachments)
 
 
-    class gamemode_Select(discord.ui.Select):
+    class Gamemode_Select(discord.ui.Select):
         def __init__(self, parent):
             self.parent = parent
             options=[
@@ -152,14 +169,14 @@ class chooseMap_View(discord.ui.View):
                 await interaction.response.defer()
                 self.parent.selected_gamemode = self.values[0]
                 print(f"Chosen Gamemode : {self.parent.selected_gamemode}")
-                self.parent.state = self.parent.mapSelectionState.MAP
+                self.parent.state = self.parent.MapSelectionState.MAP
                 await self.parent.update_view()
             else:
                 await interaction.response.defer(ephemeral=True)
                 await interaction.followup.send(f"Only {player1.user.nick} can interact with this dropdown menu !", ephemeral=True)
 
         
-    class map_Select(discord.ui.Select):
+    class Map_Select(discord.ui.Select):
         def __init__(self, parent):
             self.parent = parent
             options=[
@@ -186,7 +203,7 @@ class chooseMap_View(discord.ui.View):
 
                 print(f"Chosen Map : {self.parent.selected_map}")
                 print(f"Map ID : {self.parent.map_id}")
-                self.parent.state = self.parent.mapSelectionState.CONFIRM
+                self.parent.state = self.parent.MapSelectionState.CONFIRM
                 await self.parent.update_view()
             else:
                 await interaction.response.defer(ephemeral=True)
@@ -194,7 +211,7 @@ class chooseMap_View(discord.ui.View):
                 
 
     
-    class return_Button(discord.ui.Button):
+    class Return_Button(discord.ui.Button):
         def __init__(self, parent):
             self.parent = parent
             super().__init__(label="Return", style=discord.ButtonStyle.gray)
@@ -204,14 +221,14 @@ class chooseMap_View(discord.ui.View):
 
             if(interaction.user.id == player1.user.id):
                 await interaction.response.defer()
-                self.parent.state = self.parent.mapSelectionState.GAMEMODE
+                self.parent.state = self.parent.MapSelectionState.GAMEMODE
                 await self.parent.update_view()
             else:
                 await interaction.response.defer(ephemeral=True)
                 await interaction.followup.send(f"Only {player1.user.nick} can click on this button !", ephemeral=True)
 
 
-    class accept_Button(discord.ui.Button):
+    class Accept_Button(discord.ui.Button):
         def __init__(self, parent):
             self.parent = parent 
             super().__init__(label="Accept Map", style=discord.ButtonStyle.blurple)
@@ -228,7 +245,7 @@ class chooseMap_View(discord.ui.View):
                 await interaction.followup.send(f"Only {player1.user.nick} can click on this button !", ephemeral=True)
 
 
-    class decline_button(discord.ui.Button):
+    class Decline_button(discord.ui.Button):
         def __init__(self, parent):
             self.parent = parent
             super().__init__(label="Decline Map", style=discord.ButtonStyle.danger)
@@ -238,11 +255,59 @@ class chooseMap_View(discord.ui.View):
 
             if(interaction.user.id == player1.user.id):
                 await interaction.response.defer()
-                self.parent.state = self.parent.mapSelectionState.GAMEMODE
+                self.parent.state = self.parent.MapSelectionState.GAMEMODE
                 await self.parent.update_view()
             else:
                 await interaction.response.defer(ephemeral=True)
                 await interaction.followup.send(f"Only {player1.user.nick} can click on this button !", ephemeral=True)
+
+class BanPhase_View(discord.ui.View):
+    global message, player1, player2, map_view
+    class MapSelectionState(Enum):
+        RARITY = 1
+        BRAWLERS = 2
+        CONFIRM = 3
+    
+    
+    def __init__(self):
+        super().__init__(timeout=None)  # A modifier ?
+        self.first_pick = Player.get_first_pick(player1=player1, player2=player2)
+        self.last_pick = Player.get_last_pick(player1=player1, player2=player2)
+        self.timestamp = 0
+        self.emote_tbd = "<:tbd:1272563663835889757>" 
+
+        # self.rarity_embed = discord.Embed(
+        #     title=f"═════════════════════════════\n[DRAFT SIMULATION]\n[BAN PHASE]\n{self.first_pick.user.nick}'s turn <t:{self.timestamp}:R>\n═════════════════════════════",
+        #     description=f"{self.first_pick.user.nick}'s Bans : {emote_tbd} {emote_tbd} {emote_tbd}\n{self.last_pick.user.nick}'s Bans : {emote_tbd} {emote_tbd} {emote_tbd}"
+        # )
+
+        # self.rarity_embed.set_thumbnail(url=f"attachment://{map_view.img_name}")
+
+
+    async def update_view(self):
+        self.clear_items()
+        self.timestamp = await set_timer(60)
+
+        # rarity_embed = discord.Embed(
+        #     title=f"═════════════════════════════\n[DRAFT SIMULATION]\n[BAN PHASE]\n═════════════════════════════\n{self.first_pick.user.nick}'s turn <t:{self.timestamp}:R>\n═════════════════════════════",
+        #     description=f"{self.first_pick.user.nick}'s Bans : {self.emote_tbd} {self.emote_tbd} {self.emote_tbd}\n{self.last_pick.user.nick}'s Bans : {self.emote_tbd} {self.emote_tbd} {self.emote_tbd}"
+        # )
+        while(1):
+            rarity_embed = discord.Embed(
+            title=f"═════════════════════════════\n[DRAFT SIMULATION]\n[BAN PHASE]\n═════════════════════════════\n{self.first_pick.user.nick}'s turn <t:{self.timestamp}:R>\n═════════════════════════════",
+            description=f"{self.first_pick.user.nick}'s Bans : {self.emote_tbd} {self.emote_tbd} {self.emote_tbd}\n{self.last_pick.user.nick}'s Bans : {self.emote_tbd} {self.emote_tbd} {self.emote_tbd}"
+            )
+
+            img_path = data[map_view.selected_gamemode]["maps"][map_view.map_id]["path"]
+            img_name = map_view.img_name
+            attachments = [discord.File(img_path, filename=img_name)]
+
+            rarity_embed.set_thumbnail(url=f"attachment://{map_view.img_name}")
+
+            await message.edit(content=f"<t:{self.timestamp}:R>", embed=rarity_embed, attachments=attachments)
+            await asyncio.sleep(1)
+
+        
 
 
 # Événement qui se déclenche lorsque le bot est prêt et connecté à Discord
@@ -271,10 +336,16 @@ async def cf_phase():
     print(f"Player 2 coin = {player2.coin_flip}")
 
     if(player1.coin_flip == 0):
+        player1.has_first_pick = True
+        player2.has_first_pick = False
+
         cf_phase_embed = discord.Embed(
             description=f"🔵{player1.user.mention} has the first pick.\n🔴{player2.user.mention} has the last pick."
         )
     else:
+        player1.has_first_pick = False
+        player2.has_first_pick = True
+
         cf_phase_embed = discord.Embed(
             description=f"🔵{player2.user.mention} has the first pick.\n🔴{player1.user.mention} has the last pick."
         )
@@ -283,23 +354,32 @@ async def cf_phase():
     await message.edit(content=f"{player1.user.mention} vs {player2.user.mention}", embed=cf_phase_embed)
     await asyncio.sleep(4)
 
+
+async def set_timer(seconds):
+    dt = datetime.now()
+    future_time = dt + timedelta(seconds=seconds)
+    ts = int(future_time.timestamp())
+    return ts
+
 @tree.command(name="start_draft", description="This is a description...")
 async def start_draft(interaction: discord.Interaction, user: discord.Member):
     global message, player1, player2
-    player1 = player(user=interaction.user)
-    player2 = player(user=user)
+    player1 = Player(user=interaction.user)
+    player2 = Player(user=user)
 
 
     print("PHASE => 'start_draft'")
     print(f"Player 1 : {player1.user}\nPlayer 2 : {player2.user}")
+    
+    ts = set_timer(60)
 
     start_embed = discord.Embed(
-        title="Invitation",
+        title="Inv",
         description=f"{interaction.user.mention} wants to practice his drafting skills with you !"
     )
-    view = startDraft_View()
-
-    await interaction.response.send_message(content=user.mention, embed=start_embed, view=view)
+    view = StartDraft_View()
+    ts = await set_timer(60)
+    await interaction.response.send_message(content=f"{user.mention} <t:{ts}:R>" , embed=start_embed, view=view)
     message = await interaction.original_response()
 
     # Attendre que le bouton soit cliqué ou que le timeout soit atteint
@@ -309,10 +389,11 @@ async def start_draft(interaction: discord.Interaction, user: discord.Member):
 
     # Vue 'start_draft' terminé ?
     if(view.is_ended == True):
+        global map_view
         print("\nPHASE => 'choose_map'")
 
         await message.edit(view=None)
-        map_view = chooseMap_View()
+        map_view = ChooseMap_View()
         await message.edit(view=map_view)
         await map_view.update_view()
     elif(view.is_ended == False):
@@ -328,10 +409,14 @@ async def start_draft(interaction: discord.Interaction, user: discord.Member):
     # Vue 'chooseMap' terminé ?
     if(map_view.is_ended == True):
         print("\nPHASE => 'coin_flip'")
-
         await cf_phase()
     else:
         sys.exit("\nSomething unexpected happened.")
+    
+    await message.edit(view=None)
+    ban_view = BanPhase_View()
+    await message.edit(view=ban_view)
+    await ban_view.update_view()
 
 
 @tree.command(name="timer", description="Start a countdown timer")
@@ -346,7 +431,7 @@ async def timer(interaction: discord.Interaction):
     msg = await interaction.original_response()
 
     while time > 0:
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.5)
         time -= 1
         # Update only if the time has changed
         new_embed = discord.Embed(
@@ -362,6 +447,32 @@ async def timer(interaction: discord.Interaction):
         color=discord.Color.red()
     )
     await msg.edit(embed=done_embed)
+
+
+@tree.command(name="timer2", description="V2")
+async def timer2(interaction: discord.Interaction):
+    time = 60
+    timer_embed = discord.Embed(
+        description=f"00:01:00"
+    )
+    dt = datetime.now()
+    future_time = dt + timedelta(seconds=60)
+    ts = int(future_time.timestamp())
+
+    await interaction.response.send_message(content=f"**<t:{ts}:R>**",embed=timer_embed)
+    msg = await interaction.original_response()
+    
+    for x in range(time, 0, -1):
+        seconds = x % 60
+        minutes = int(x / 60) % 60
+        timer_embed = discord.Embed(
+            description=f"**00:{minutes:02}:{seconds:02}**"
+        )
+
+        await msg.edit(embed=timer_embed)
+        await asyncio.sleep(1)
+
+
 
 
 # Démarrage du bot avec le token récupéré depuis les variables d'environnement
