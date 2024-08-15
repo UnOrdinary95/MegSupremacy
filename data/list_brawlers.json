@@ -1,0 +1,76 @@
+{
+    "Starting & Rare": [
+        {
+            "id": 0,
+            "name": "Shelly",
+            "icon": "<:shelly_portrait:1273650503292551229>",
+            "pin": "<:shelly_thanks_pin:1273649037140168804>",
+            "already_picked": false,
+            "is_banned": false
+        },
+        {
+            "id": 1,
+            "name": "Rosa",
+            "icon": "<:rosa_portrait:1273650513551953940>",
+            "pin": "<:rosa_thanks_pin:1273649604742615121>",
+            "already_picked": false,
+            "is_banned": false
+        },
+        {
+            "id": 2,
+            "name": "Poco",
+            "icon": "<:poco_portrait:1273650523798503424>",
+            "pin": "<:poco_thanks_pin:1273649661542010900>",
+            "already_picked": false,
+            "is_banned": false
+        },
+        {
+            "id": 3,
+            "name": "El Primo",
+            "icon": "<:elprimo_portrait:1273650534066421841>",
+            "pin": "<:primo_thanks_pin:1273649729695383582>",
+            "already_picked": false,
+            "is_banned": false
+        },
+        {
+            "id": 4,
+            "name": "Nita",
+            "icon": "<:nita_portrait:1273650542459093064>",
+            "pin": "<:nita_thanks_pin:1273649835634851900>",
+            "already_picked": false,
+            "is_banned": false
+        },
+        {
+            "id": 5,
+            "name": "Barley",
+            "icon": "<:barley_portrait:1273650574625210420>",
+            "pin": "<:barley_thanks_pin:1273649928035635220>",
+            "already_picked": false,
+            "is_banned": false
+        },
+        {
+            "id": 6,
+            "name": "Brock",
+            "icon": "<:brock_portrait:1273651146178695180>",
+            "pin": "<:brock_thanks_pin:1273651157012578415>",
+            "already_picked": false,
+            "is_banned": false
+        },
+        {
+            "id": 7,
+            "name": "Bull",
+            "icon": "<:bull_portrait:1273650585035345963>",
+            "pin": "<:bull_thanks_pin:1273650036797997187>",
+            "already_picked": false,
+            "is_banned": false
+        },
+        {
+            "id": 8,
+            "name": "Colt",
+            "icon": "<:colt_portrait:1273650593960951911>",
+            "pin": "<:colt_thanks_pin:1273650047807918242>",
+            "already_picked": false,
+            "is_banned": false
+        }
+    ]
+}

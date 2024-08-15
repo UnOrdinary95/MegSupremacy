@@ -101,8 +101,8 @@ class ChooseMap_View(discord.ui.View):
         self.selected_gamemode = None   # Permet de stocker le nom du mode sélectionnée
         self.selected_map = None        # Permet de stocker le nom de la map sélectionnée
         self.map_id = -1                # Permet de stocker l'id de la map (Permettant de savoir easily quel map correspond à quel path)
-        self.attachments = []         # Permet de stocker le png de la map
         self.img_name = None            # Permet de stocker le nom du png
+        self.img_path = None            # Permet de stocker le chemin vers le png 
         self.state = self.MapSelectionState.GAMEMODE
         self.is_ended = False
         
@@ -135,18 +135,16 @@ class ChooseMap_View(discord.ui.View):
             self.confirm_embed = discord.Embed(
             description=f"Do you choose {self.selected_map} ?"
             )
-            img_path = data[self.selected_gamemode]["maps"][self.map_id]["path"]
-            self.img_name = os.path.basename(img_path)
-            # file = discord.File(img_path, filename=self.img_name)
+            self.img_path = data[self.selected_gamemode]["maps"][self.map_id]["path"]
+            self.img_name = os.path.basename(self.img_path)
             # Assurez-vous que file est dans une liste
-            # self.attachments = [file]
-            self.attachments = [discord.File(img_path, filename=self.img_name)]
+            attachments = [discord.File(self.img_path, filename=self.img_name)]
 
             self.confirm_embed.set_image(url=f"attachment://{self.img_name}")
 
             self.add_item(self.Accept_Button(self))
             self.add_item(self.Decline_button(self))
-            await message.edit(content=f"{player1.user.mention} vs {player2.user.mention}", embed=self.confirm_embed, view=self, attachments=self.attachments)
+            await message.edit(content=f"{player1.user.mention} vs {player2.user.mention}", embed=self.confirm_embed, view=self, attachments=attachments)
 
 
     class Gamemode_Select(discord.ui.Select):
@@ -263,7 +261,7 @@ class ChooseMap_View(discord.ui.View):
 
 class BanPhase_View(discord.ui.View):
     global message, player1, player2, map_view
-    class MapSelectionState(Enum):
+    class BanSelectionState(Enum):
         RARITY = 1
         BRAWLERS = 2
         CONFIRM = 3
@@ -274,38 +272,80 @@ class BanPhase_View(discord.ui.View):
         self.first_pick = Player.get_first_pick(player1=player1, player2=player2)
         self.last_pick = Player.get_last_pick(player1=player1, player2=player2)
         self.timestamp = 0
-        self.emote_tbd = "<:tbd:1272563663835889757>" 
+        self.emote_tbd = "<:tbd:1272563663835889757>"
+        self.add_item(discord.ui.button(label=f"Click here {self.first_pick.user.nick} !", custom_id="P1", style=discord.ButtonStyle.grey))
+        self.add_item(discord.ui.button(label=f"Click here {self.last_pick.user.nick} !", custom_id="P2", style=discord.ButtonStyle.grey))
+        self.message_p1 = None
+        self.message_p2 = None
+        self.selected_rarity = [None, None] 
+        self.selected_brawler = [None, None] 
+        self.state = [self.BanSelectionState.RARITY, self.BanSelectionState.RARITY]
+        self.is_ended = False
+    
+    @discord.ui.button(custom_id="P1")
+    async def p1_button_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
+        print(f"{interaction.user.global_name} clicked on the button.")
 
-        # self.rarity_embed = discord.Embed(
-        #     title=f"═════════════════════════════\n[DRAFT SIMULATION]\n[BAN PHASE]\n{self.first_pick.user.nick}'s turn <t:{self.timestamp}:R>\n═════════════════════════════",
-        #     description=f"{self.first_pick.user.nick}'s Bans : {emote_tbd} {emote_tbd} {emote_tbd}\n{self.last_pick.user.nick}'s Bans : {emote_tbd} {emote_tbd} {emote_tbd}"
-        # )
+        if (interaction.user.id == self.first_pick.user.id):
+            await interaction.response.defer(ephemeral=True)
+            self.message_p1 = await interaction.followup.send()
+        await interaction.response.send_message(f"{self.first_pick} a cliqué sur le bouton!")
 
-        # self.rarity_embed.set_thumbnail(url=f"attachment://{map_view.img_name}")
+    async def timer(self):
+        self.clear_items()
+        self.timestamp = 60
 
+        rarity_embed = discord.Embed(
+            title=f"═════════════════════════════\n[DRAFT SIMULATION]\n[BAN PHASE]\n═════════════════════════════\n{self.first_pick.user.nick}'s turn in {self.timestamp:02}seconds\n═════════════════════════════",
+            description=f"{self.first_pick.user.nick}'s Bans : {self.emote_tbd} {self.emote_tbd} {self.emote_tbd}\n{self.last_pick.user.nick}'s Bans : {self.emote_tbd} {self.emote_tbd} {self.emote_tbd}"
+        )
+        attachments = [discord.File(map_view.img_path, filename=map_view.img_name)]
+        rarity_embed.set_thumbnail(url=f"attachment://{map_view.img_name}")
+
+
+        await message.edit(embed=rarity_embed, attachments=attachments)
+
+        for i in range(self.timestamp, -1, -1):
+            seconds = i
+            rarity_embed = discord.Embed(
+                title=f"═════════════════════════════\n[DRAFT SIMULATION]\n[BAN PHASE]\n═════════════════════════════\n{self.first_pick.user.nick}'s turn in {seconds:02} seconds\n═════════════════════════════",
+                description=f"{self.first_pick.user.nick}'s Bans : {self.emote_tbd} {self.emote_tbd} {self.emote_tbd}\n{self.last_pick.user.nick}'s Bans : {self.emote_tbd} {self.emote_tbd} {self.emote_tbd}"
+            )
+            attachments = [discord.File(map_view.img_path, filename=map_view.img_name)]
+            rarity_embed.set_thumbnail(url=f"attachment://{map_view.img_name}")
+
+            await message.edit(embed=rarity_embed)
+            await asyncio.sleep(1)
 
     async def update_view(self):
         self.clear_items()
-        self.timestamp = await set_timer(60)
+        if(self.state == self.BanSelectionState.RARITY):
+            print("'ban_phase' : RARITY")
 
-        # rarity_embed = discord.Embed(
-        #     title=f"═════════════════════════════\n[DRAFT SIMULATION]\n[BAN PHASE]\n═════════════════════════════\n{self.first_pick.user.nick}'s turn <t:{self.timestamp}:R>\n═════════════════════════════",
-        #     description=f"{self.first_pick.user.nick}'s Bans : {self.emote_tbd} {self.emote_tbd} {self.emote_tbd}\n{self.last_pick.user.nick}'s Bans : {self.emote_tbd} {self.emote_tbd} {self.emote_tbd}"
-        # )
-        while(1):
-            rarity_embed = discord.Embed(
-            title=f"═════════════════════════════\n[DRAFT SIMULATION]\n[BAN PHASE]\n═════════════════════════════\n{self.first_pick.user.nick}'s turn <t:{self.timestamp}:R>\n═════════════════════════════",
-            description=f"{self.first_pick.user.nick}'s Bans : {self.emote_tbd} {self.emote_tbd} {self.emote_tbd}\n{self.last_pick.user.nick}'s Bans : {self.emote_tbd} {self.emote_tbd} {self.emote_tbd}"
-            )
+    
+    class Rarity_Select(discord.ui.Select):
+        def __init__(self, parent):
+            self.parent = parent
+            options=[
+                discord.SelectOption(label="Starting & Rare", emoji="<:icon_catalogue_skins_rare:1273679610583715851>"),
+                discord.SelectOption(label="Super Rare", emoji="<:icon_catalogue_skins_super_rare:1273679618733506631>"),
+                discord.SelectOption(label="Epic", emoji="<:icon_catalogue_skins_epic:1273679627860054127>"),
+                discord.SelectOption(label="Mythic", emoji="<:icon_catalogue_skins_mythic:1273679638211596369>"),
+                discord.SelectOption(label="Legendary", emoji="<:icon_catalogue_skins_legendary:1273679645409284189>")
+            ]
+            super().__init__(placeholder="Rarity", options=options)
 
-            img_path = data[map_view.selected_gamemode]["maps"][map_view.map_id]["path"]
-            img_name = map_view.img_name
-            attachments = [discord.File(img_path, filename=img_name)]
-
-            rarity_embed.set_thumbnail(url=f"attachment://{map_view.img_name}")
-
-            await message.edit(content=f"<t:{self.timestamp}:R>", embed=rarity_embed, attachments=attachments)
-            await asyncio.sleep(1)
+        async def callback(self, interaction: discord.Interaction):
+            print(f"{interaction.user.global_name} clicked on the button.")
+            
+            if(interaction.user.id == player1.user.id):
+                await interaction.response.defer()
+                self.parent.selected_rarity[0] = self.values[0]
+                self.parent.state[0] = self.parent.BanSelectionState.BRAWLERS
+                await self.parent.update_view()
+            else:
+                await interaction.response.defer(ephemeral=True)
+                await interaction.followup.send(f"Only {player1.user.nick} & {player2.user.nick} can interact with this dropdown menu !", ephemeral=True)
 
         
 
@@ -350,9 +390,9 @@ async def cf_phase():
             description=f"🔵{player2.user.mention} has the first pick.\n🔴{player1.user.mention} has the last pick."
         )
 
-    await asyncio.sleep(4)
+    await asyncio.sleep(0)
     await message.edit(content=f"{player1.user.mention} vs {player2.user.mention}", embed=cf_phase_embed)
-    await asyncio.sleep(4)
+    await asyncio.sleep(0)
 
 
 async def set_timer(seconds):
@@ -416,7 +456,7 @@ async def start_draft(interaction: discord.Interaction, user: discord.Member):
     await message.edit(view=None)
     ban_view = BanPhase_View()
     await message.edit(view=ban_view)
-    await ban_view.update_view()
+    await ban_view.timer()
 
 
 @tree.command(name="timer", description="Start a countdown timer")
@@ -459,7 +499,7 @@ async def timer2(interaction: discord.Interaction):
     future_time = dt + timedelta(seconds=60)
     ts = int(future_time.timestamp())
 
-    await interaction.response.send_message(content=f"**<t:{ts}:R>**",embed=timer_embed)
+    await interaction.response.send_message(embed=timer_embed)
     msg = await interaction.original_response()
     
     for x in range(time, 0, -1):
