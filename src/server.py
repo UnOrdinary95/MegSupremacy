@@ -7,6 +7,7 @@ import asyncio
 import random
 from enum import Enum
 from datetime import datetime, timedelta
+from typing import Callable, Optional
 
 # Définition des intents pour le bot Discord
 intents = discord.Intents.default()
@@ -51,7 +52,73 @@ class Player():
         else:
             return player2
 
+class Pagination(discord.ui.View):
+    def __init__(self, interaction: discord.Interaction, get_page: Callable):
+        self.interaction = interaction
+        self.get_page = get_page
+        self.total_pages: Optional[int] = None
+        self.index = 1
+        super().__init__(timeout=100)
 
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user == self.interaction.user:
+            return True
+        else:
+            emb = discord.Embed(
+                description=f"Only the author of the command can perform this action.",
+                color=16711680
+            )
+            await interaction.response.send_message(embed=emb, ephemeral=True)
+            return False
+
+    async def navegate(self):
+        emb, self.total_pages = await self.get_page(self.index)
+        if self.total_pages == 1:
+            await self.interaction.response.send_message(embed=emb)
+        elif self.total_pages > 1:
+            self.update_buttons()
+            await self.interaction.response.send_message(embed=emb, view=self)
+
+    async def edit_page(self, interaction: discord.Interaction):
+        emb, self.total_pages = await self.get_page(self.index)
+        self.update_buttons()
+        await interaction.response.edit_message(embed=emb, view=self)
+
+    def update_buttons(self):
+        if self.index > self.total_pages // 2:
+            self.children[2].emoji = "⏮️"
+        else:
+            self.children[2].emoji = "⏭️"
+        self.children[0].disabled = self.index == 1
+        self.children[1].disabled = self.index == self.total_pages
+
+    @discord.ui.button(emoji="◀️", style=discord.ButtonStyle.blurple)
+    async def previous(self, interaction: discord.Interaction, button: discord.Button):
+        self.index -= 1
+        await self.edit_page(interaction)
+
+    @discord.ui.button(emoji="▶️", style=discord.ButtonStyle.blurple)
+    async def next(self, interaction: discord.Interaction, button: discord.Button):
+        self.index += 1
+        await self.edit_page(interaction)
+
+    @discord.ui.button(emoji="⏭️", style=discord.ButtonStyle.blurple)
+    async def end(self, interaction: discord.Interaction, button: discord.Button):
+        if self.index <= self.total_pages//2:
+            self.index = self.total_pages
+        else:
+            self.index = 1
+        await self.edit_page(interaction)
+
+    async def on_timeout(self):
+        # remove buttons on timeout
+        message = await self.interaction.original_response()
+        await message.edit(view=None)
+
+    @staticmethod
+    def compute_total_pages(total_results: int, results_per_page: int) -> int:
+        return ((total_results - 1) // results_per_page) + 1
+    
 class StartDraft_View(discord.ui.View):
     global message, player1, player2
     
@@ -261,6 +328,7 @@ class ChooseMap_View(discord.ui.View):
 
 class BanPhase_View(discord.ui.View):
     global message, player1, player2, map_view
+
     class BanSelectionState(Enum):
         RARITY = 1
         BRAWLERS = 2
@@ -273,24 +341,53 @@ class BanPhase_View(discord.ui.View):
         self.last_pick = Player.get_last_pick(player1=player1, player2=player2)
         self.timestamp = 0
         self.emote_tbd = "<:tbd:1272563663835889757>"
-        self.add_item(discord.ui.button(label=f"Click here {self.first_pick.user.nick} !", custom_id="P1", style=discord.ButtonStyle.grey))
-        self.add_item(discord.ui.button(label=f"Click here {self.last_pick.user.nick} !", custom_id="P2", style=discord.ButtonStyle.grey))
-        self.message_p1 = None
-        self.message_p2 = None
+        self.button = [
+            discord.ui.Button(custom_id="P1", style=discord.ButtonStyle.gray), 
+            discord.ui.Button(custom_id="P2", style=discord.ButtonStyle.gray)
+        ]
+        self.update_button_labels()
+        self.add_item(self.button[0])
+        self.add_item(self.button[1])
+        self.followup = [None, None]
+        self.instance_view = [None, None]
         self.selected_rarity = [None, None] 
-        self.selected_brawler = [None, None] 
+        self.selected_brawler = [None, None]
+        self.banned_brawlers = [[None, None, None],[None, None, None]]
         self.state = [self.BanSelectionState.RARITY, self.BanSelectionState.RARITY]
         self.is_ended = False
-    
-    @discord.ui.button(custom_id="P1")
-    async def p1_button_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
+
+        self.instance_embed = discord.Embed(
+            title="⚠️DO NOT DISMISS THIS MESSAGE OR RESTART DISCORD⚠️",
+            description=f"Your Bans : {self.emote_tbd} {self.emote_tbd} {self.emote_tbd}\nPlease choose a rarity :"
+        )
+
+    def update_button_labels(self):
+        self.button[0].label = f"Click here {self.first_pick.user.nick} !"
+        self.button[1].label = f"Click here {self.last_pick.user.nick} !"
+
+        self.button[0].callback = self.p1_button_callback
+        self.button[1].callback = self.p2_button_callback
+
+    async def p1_button_callback(self, interaction: discord.Interaction):
         print(f"{interaction.user.global_name} clicked on the button.")
 
         if (interaction.user.id == self.first_pick.user.id):
             await interaction.response.defer(ephemeral=True)
-            self.message_p1 = await interaction.followup.send()
-        await interaction.response.send_message(f"{self.first_pick} a cliqué sur le bouton!")
+            self.followup[0] = await interaction.followup.send(embed=self.instance_embed, ephemeral=True, wait=True)
+            self.instance_view[0] = self.Player_View(0, self, self.followup[0])
+            await self.followup[0].edit(view=self.instance_view[0])
+            await self.instance_view[0].update_view()
+    
+    async def p2_button_callback(self, interaction: discord.Interaction):
+        print(f"{interaction.user.global_name} clicked on the button.")
 
+        if (interaction.user.id == self.first_pick.user.id):
+            await interaction.response.defer(ephemeral=True)
+            self.followup[1] = await interaction.followup.send(embed=self.instance_embed, ephemeral=True, wait=True)
+            self.instance_view[1] = self.Player_View(1, self, self.followup[1])
+            await self.followup[1].edit(view=self.instance_view[1])
+            await self.instance_view[1].update_view()
+    
     async def timer(self):
         self.clear_items()
         self.timestamp = 60
@@ -317,15 +414,30 @@ class BanPhase_View(discord.ui.View):
             await message.edit(embed=rarity_embed)
             await asyncio.sleep(1)
 
-    async def update_view(self):
-        self.clear_items()
-        if(self.state == self.BanSelectionState.RARITY):
-            print("'ban_phase' : RARITY")
+
+    class Player_View(discord.ui.View):
+        def __init__(self, parent, id_player, followup):
+            super().__init__(timeout=None)  # A modifier ?
+            self.id_player = id_player
+            self.parent = parent
+            self.message = followup
+
+            self.rarity_embed = discord.Embed(
+                title="⚠️DO NOT DISMISS THIS MESSAGE OR RESTART DISCORD⚠️",
+                description=f"Your Bans : {self.parent.emote_tbd} {self.parent.emote_tbd} {self.parent.emote_tbd}\nPlease choose a rarity :"
+            )
+        
+        async def update_view(self):
+            self.clear_items()
+            if self.parent.state[self.id_player] == self.parent.BanSelectionState.RARITY:
+                self.add_item(self.parent.Rarity_Select(self.parent, self.id_player))
+                await self.message.edit(embed=self.rarity_embed, view=self)
 
     
     class Rarity_Select(discord.ui.Select):
-        def __init__(self, parent):
+        def __init__(self, parent, id_player):
             self.parent = parent
+            self.id_player = id_player
             options=[
                 discord.SelectOption(label="Starting & Rare", emoji="<:icon_catalogue_skins_rare:1273679610583715851>"),
                 discord.SelectOption(label="Super Rare", emoji="<:icon_catalogue_skins_super_rare:1273679618733506631>"),
@@ -336,18 +448,33 @@ class BanPhase_View(discord.ui.View):
             super().__init__(placeholder="Rarity", options=options)
 
         async def callback(self, interaction: discord.Interaction):
-            print(f"{interaction.user.global_name} clicked on the button.")
-            
-            if(interaction.user.id == player1.user.id):
-                await interaction.response.defer()
-                self.parent.selected_rarity[0] = self.values[0]
-                self.parent.state[0] = self.parent.BanSelectionState.BRAWLERS
-                await self.parent.update_view()
-            else:
-                await interaction.response.defer(ephemeral=True)
-                await interaction.followup.send(f"Only {player1.user.nick} & {player2.user.nick} can interact with this dropdown menu !", ephemeral=True)
+            await interaction.response.defer()
+            self.parent.selected_rarity[self.id_player] = self.values[0]
+            self.parent.state[self.id_player] = self.parent.BanSelectionState.BRAWLERS
+            await self.parent.instance_view[self.id_player].update_view()
 
-        
+
+    class Brawler_View(discord.ui.View):
+        def __init__(self, parent, id_player):
+            self.parent = parent
+            self.id_player = id_player
+            options=[
+
+            ]
+        pass
+
+
+    class Return_Button(discord.ui.Button):
+        pass
+
+    
+    class Accept_Button(discord.ui.Button):
+        pass
+
+
+    class Decline_Button(discord.ui.Button):
+        pass
+
 
 
 # Événement qui se déclenche lorsque le bot est prêt et connecté à Discord
@@ -511,6 +638,44 @@ async def timer2(interaction: discord.Interaction):
 
         await msg.edit(embed=timer_embed)
         await asyncio.sleep(1)
+
+
+users = [f"User {i}" for i in range(1, 10000)]
+# This is a long list of results
+# I'm going to use pagination to display the data
+L = 10    # elements per page
+
+
+@tree.command(name="show")
+async def show(interaction: discord.Interaction):
+    async def get_page(page: int):
+        emb = discord.Embed(title="The Users", description="")
+        offset = (page-1) * L
+        for user in users[offset:offset+L]:
+            emb.description += f"{user}\n"
+        emb.set_author(name=f"Requested by {interaction.user}")
+        n = Pagination.compute_total_pages(len(users), L)
+        emb.set_footer(text=f"Page {page} from {n}")
+        return emb, n
+
+    await Pagination(interaction, get_page).navegate()
+
+
+class Paginator(discord.ui.View):
+    def __init__(self, message):
+        super().__init__(timeout=None)
+        self.message = message
+        self.button = [
+            discord.ui.Button(label="A", style=discord.ButtonStyle.gray),
+            discord.ui.Button(label="B", style=discord.ButtonStyle.gray),
+            discord.ui.Button(label="C", style=discord.ButtonStyle.gray),
+            discord.ui.Button(label="D", style=discord.ButtonStyle.gray),
+            discord.ui.Button(label="⏩", style=discord.ButtonStyle.gray)
+        ]
+
+    def initial_config(self):
+        self.add_item(self.button[0])
+        self.add_item(self.button[1])
 
 
 
