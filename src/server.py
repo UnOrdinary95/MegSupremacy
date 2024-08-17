@@ -8,6 +8,7 @@ import random
 from enum import Enum
 from datetime import datetime, timedelta
 from typing import Callable, Optional
+from typing import List, Optional
 
 # Définition des intents pour le bot Discord
 intents = discord.Intents.default()
@@ -19,10 +20,14 @@ tree = app_commands.CommandTree(client)
 
 # Chemin relatif vers le fichier JSON
 path = os.path.join("data","map.json")
+path2 = os.path.join("data", "list_brawlers.json")
 
-# Charge le fichier JSON
+# Charge les fichiers JSON
 with open(path, "r") as file:
     data = json.load(file)
+
+with open(path2, "r") as file:
+    data2 = json.load(file)
 
 # Message initial
 message: discord.InteractionMessage
@@ -39,14 +44,14 @@ class Player():
         return random.randint(0, 1)
     
     @classmethod
-    def get_first_pick(cls, player1, player2):
+    def get_first_player(cls, player1, player2) -> 'Player':
         if player1.has_first_pick == True:
             return player1
         else:
             return player2
     
     @classmethod
-    def get_last_pick(cls, player1, player2):
+    def get_last_player(cls, player1, player2) -> 'Player':
         if player1.has_first_pick == False:
             return player1
         else:
@@ -127,14 +132,14 @@ class StartDraft_View(discord.ui.View):
         self.is_ended = None
 
     @discord.ui.button(label="Reject", style=discord.ButtonStyle.red)
-    async def reject(self, interaction: discord.Interaction, Button: discord.ui.Button):
+    async def reject(self, interaction: discord.Interaction, button: discord.ui.Button):
         print(f"{interaction.user.global_name} clicked on the button.")
 
-        # Supprime le message si le Joueur 2 clique sur "Reject"
         if (interaction.user.id == player2.user.id):
             await interaction.message.delete()
             await interaction.response.defer(ephemeral=True)
             await interaction.followup.send("You have rejected the invitation. The message has been deleted.", ephemeral=True)
+
             self.is_ended = False
             self.stop()
         else:
@@ -142,11 +147,12 @@ class StartDraft_View(discord.ui.View):
             await interaction.followup.send(f"Only {player2.user.nick} can click on this button !", ephemeral=True)
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.green)
-    async def accept(self, interaction: discord.Interaction, Button: discord.ui.Button):
+    async def accept(self, interaction: discord.Interaction, button: discord.ui.Button):
         print(f"{interaction.user.global_name} clicked on the button.")
 
         if (interaction.user.id == player2.user.id):
             await interaction.response.defer()
+            
             self.is_ended = True
             self.stop()
         else:
@@ -165,11 +171,11 @@ class ChooseMap_View(discord.ui.View):
 
     def __init__(self):
         super().__init__(timeout=None)
-        self.selected_gamemode = None   # Permet de stocker le nom du mode sélectionnée
-        self.selected_map = None        # Permet de stocker le nom de la map sélectionnée
-        self.map_id = -1                # Permet de stocker l'id de la map (Permettant de savoir easily quel map correspond à quel path)
-        self.img_name = None            # Permet de stocker le nom du png
-        self.img_path = None            # Permet de stocker le chemin vers le png 
+        self.selected_gamemode = ""
+        self.selected_map = ""       
+        self.map_id = -1                
+        self.img_name = ""              
+        self.img_path = ""              
         self.state = self.MapSelectionState.GAMEMODE
         self.is_ended = False
         
@@ -200,22 +206,19 @@ class ChooseMap_View(discord.ui.View):
             print("'choose_map' state : CONFIRM")
 
             self.confirm_embed = discord.Embed(
-            description=f"Do you choose {self.selected_map} ?"
+                description=f"Do you choose {self.selected_map} ?"
             )
             self.img_path = data[self.selected_gamemode]["maps"][self.map_id]["path"]
             self.img_name = os.path.basename(self.img_path)
-            # Assurez-vous que file est dans une liste
             attachments = [discord.File(self.img_path, filename=self.img_name)]
-
             self.confirm_embed.set_image(url=f"attachment://{self.img_name}")
 
             self.add_item(self.Accept_Button(self))
             self.add_item(self.Decline_button(self))
             await message.edit(content=f"{player1.user.mention} vs {player2.user.mention}", embed=self.confirm_embed, view=self, attachments=attachments)
 
-
     class Gamemode_Select(discord.ui.Select):
-        def __init__(self, parent):
+        def __init__(self, parent:'ChooseMap_View'):
             self.parent = parent
             options=[
                 discord.SelectOption(label="Gem Grab", emoji=data["Gem Grab"]["emoji"]),
@@ -242,7 +245,7 @@ class ChooseMap_View(discord.ui.View):
 
         
     class Map_Select(discord.ui.Select):
-        def __init__(self, parent):
+        def __init__(self, parent:'ChooseMap_View'):
             self.parent = parent
             options=[
                 discord.SelectOption(label=data[self.parent.selected_gamemode]["maps"][0]["name"], emoji=data[self.parent.selected_gamemode]["emoji"]),
@@ -275,9 +278,8 @@ class ChooseMap_View(discord.ui.View):
                 await interaction.followup.send(f"Only {player1.user.nick} can interact with this dropdown menu !", ephemeral=True)
                 
 
-    
     class Return_Button(discord.ui.Button):
-        def __init__(self, parent):
+        def __init__(self, parent:'ChooseMap_View'):
             self.parent = parent
             super().__init__(label="Return", style=discord.ButtonStyle.gray)
 
@@ -294,7 +296,7 @@ class ChooseMap_View(discord.ui.View):
 
 
     class Accept_Button(discord.ui.Button):
-        def __init__(self, parent):
+        def __init__(self, parent:'ChooseMap_View'):
             self.parent = parent 
             super().__init__(label="Accept Map", style=discord.ButtonStyle.blurple)
 
@@ -311,7 +313,7 @@ class ChooseMap_View(discord.ui.View):
 
 
     class Decline_button(discord.ui.Button):
-        def __init__(self, parent):
+        def __init__(self, parent:'ChooseMap_View'):
             self.parent = parent
             super().__init__(label="Decline Map", style=discord.ButtonStyle.danger)
 
@@ -337,22 +339,25 @@ class BanPhase_View(discord.ui.View):
     
     def __init__(self):
         super().__init__(timeout=None)  # A modifier ?
-        self.first_pick = Player.get_first_pick(player1=player1, player2=player2)
-        self.last_pick = Player.get_last_pick(player1=player1, player2=player2)
+        self.first_pick = Player.get_first_player(player1=player1, player2=player2)
+        self.last_pick = Player.get_last_player(player1=player1, player2=player2)
         self.timestamp = 0
         self.emote_tbd = "<:tbd:1272563663835889757>"
-        self.button = [
+        self.buttons = [
             discord.ui.Button(custom_id="P1", style=discord.ButtonStyle.gray), 
             discord.ui.Button(custom_id="P2", style=discord.ButtonStyle.gray)
         ]
         self.update_button_labels()
-        self.add_item(self.button[0])
-        self.add_item(self.button[1])
-        self.followup = [None, None]
-        self.instance_view = [None, None]
-        self.selected_rarity = [None, None] 
-        self.selected_brawler = [None, None]
-        self.banned_brawlers = [[None, None, None],[None, None, None]]
+        self.add_item(self.buttons[0])
+        self.add_item(self.buttons[1])
+        self.followup: List[discord.InteractionMessage] = [None,None]                   # Need typing List
+        self.instance_view: List[Optional['BanPhase_View.Player_View']] = [None, None]  # Need typing Optional ==> Indique que la liste peut etre None ou PlayerView  
+        self.selected_rarity = ["", ""] 
+        self.selected_brawler = [-1, -1]
+        self.banned_brawler = {
+            self.first_pick.user.nick: [{"Rarity": "", "Id_Brawler": -1},{"Rarity": "", "Id_Brawler": -1},{"Rarity": "", "Id_Brawler": -1}],
+            self.last_pick.user.nick: [{"Rarity": "", "Id_Brawler": -1},{"Rarity": "", "Id_Brawler": -1},{"Rarity": "", "Id_Brawler": -1}]
+            }
         self.state = [self.BanSelectionState.RARITY, self.BanSelectionState.RARITY]
         self.is_ended = False
 
@@ -362,11 +367,11 @@ class BanPhase_View(discord.ui.View):
         )
 
     def update_button_labels(self):
-        self.button[0].label = f"Click here {self.first_pick.user.nick} !"
-        self.button[1].label = f"Click here {self.last_pick.user.nick} !"
+        self.buttons[0].label = f"Click here {self.first_pick.user.nick} !"
+        self.buttons[1].label = f"Click here {self.last_pick.user.nick} !"
 
-        self.button[0].callback = self.p1_button_callback
-        self.button[1].callback = self.p2_button_callback
+        self.buttons[0].callback = self.p1_button_callback
+        self.buttons[1].callback = self.p2_button_callback
 
     async def p1_button_callback(self, interaction: discord.Interaction):
         print(f"{interaction.user.global_name} clicked on the button.")
@@ -374,17 +379,17 @@ class BanPhase_View(discord.ui.View):
         if (interaction.user.id == self.first_pick.user.id):
             await interaction.response.defer(ephemeral=True)
             self.followup[0] = await interaction.followup.send(embed=self.instance_embed, ephemeral=True, wait=True)
-            self.instance_view[0] = self.Player_View(0, self, self.followup[0])
+            self.instance_view[0] = self.Player_View(self, 0, self.followup[0])
             await self.followup[0].edit(view=self.instance_view[0])
             await self.instance_view[0].update_view()
-    
+
     async def p2_button_callback(self, interaction: discord.Interaction):
         print(f"{interaction.user.global_name} clicked on the button.")
 
         if (interaction.user.id == self.first_pick.user.id):
             await interaction.response.defer(ephemeral=True)
             self.followup[1] = await interaction.followup.send(embed=self.instance_embed, ephemeral=True, wait=True)
-            self.instance_view[1] = self.Player_View(1, self, self.followup[1])
+            self.instance_view[1] = self.Player_View(self, 1, self.followup[1])
             await self.followup[1].edit(view=self.instance_view[1])
             await self.instance_view[1].update_view()
     
@@ -398,7 +403,6 @@ class BanPhase_View(discord.ui.View):
         )
         attachments = [discord.File(map_view.img_path, filename=map_view.img_name)]
         rarity_embed.set_thumbnail(url=f"attachment://{map_view.img_name}")
-
 
         await message.edit(embed=rarity_embed, attachments=attachments)
 
@@ -416,7 +420,7 @@ class BanPhase_View(discord.ui.View):
 
 
     class Player_View(discord.ui.View):
-        def __init__(self, parent, id_player, followup):
+        def __init__(self, parent: 'BanPhase_View', id_player, followup: discord.InteractionMessage):
             super().__init__(timeout=None)  # A modifier ?
             self.id_player = id_player
             self.parent = parent
@@ -426,16 +430,23 @@ class BanPhase_View(discord.ui.View):
                 title="⚠️DO NOT DISMISS THIS MESSAGE OR RESTART DISCORD⚠️",
                 description=f"Your Bans : {self.parent.emote_tbd} {self.parent.emote_tbd} {self.parent.emote_tbd}\nPlease choose a rarity :"
             )
+
+            self.brawler_embed = discord.Embed(
+                title="⚠️DO NOT DISMISS THIS MESSAGE OR RESTART DISCORD⚠️",
+                description=f"Your Bans : {self.parent.emote_tbd} {self.parent.emote_tbd} {self.parent.emote_tbd}\nPlease choose a brawler :"
+            )
         
         async def update_view(self):
             self.clear_items()
             if self.parent.state[self.id_player] == self.parent.BanSelectionState.RARITY:
                 self.add_item(self.parent.Rarity_Select(self.parent, self.id_player))
                 await self.message.edit(embed=self.rarity_embed, view=self)
+            elif self.parent.state[self.id_player] == self.parent.BanSelectionState.BRAWLERS:
+                await self.message.edit(embed=self.brawler_embed, view=self.parent.Brawler_View(self.parent, self.id_player))
 
     
     class Rarity_Select(discord.ui.Select):
-        def __init__(self, parent, id_player):
+        def __init__(self, parent: 'BanPhase_View', id_player):
             self.parent = parent
             self.id_player = id_player
             options=[
@@ -455,13 +466,40 @@ class BanPhase_View(discord.ui.View):
 
 
     class Brawler_View(discord.ui.View):
-        def __init__(self, parent, id_player):
+        def __init__(self, parent: 'BanPhase_View', id_player):
+            super().__init__(timeout=None)
             self.parent = parent
             self.id_player = id_player
-            options=[
+            self.total_buttons = self.button_amount()
+            self.buttons = []
+            self.add_brawlers_button()
 
-            ]
-        pass
+        
+        def button_amount(self):
+            match self.parent.selected_rarity[self.id_player]:
+                case "Starting & Rare":
+                    return 9
+                case "Super Rare":
+                    return 10
+                case "Epic":
+                    return 13
+                case "Mythic":
+                    return 13
+                case "Legendary":
+                    return 11
+        
+        def add_brawlers_button(self):
+            for id_brawler in range(self.total_buttons):
+                self.buttons.append(discord.ui.Button(
+                    emoji=data2[self.parent.selected_rarity[self.id_player]][id_brawler]["pin"], 
+                    custom_id=str(id_brawler), 
+                    style=discord.ButtonStyle.blurple)
+                )
+                self.add_item(self.buttons[id_brawler])
+
+
+
+
 
 
     class Return_Button(discord.ui.Button):

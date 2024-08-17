@@ -1,6 +1,3 @@
-afficher nom brawler = data["Starting & Rare"][X]["name"]
-afficher pin = data["Starting & Rare"][X]["pin"]
-afficher icon = data["Starting & Rare"][X]["icon"] 
 {
     "Starting & Rare": [
         {
