@@ -1,58 +1,235 @@
 {
     "Starting & Rare": [
         {
-            "id": 0,
             "name": "Shelly",
-            "icon": "<:shelly_portrait:1273650503292551229>",
+            "portrait": "<:shelly_portrait:1273650503292551229>",
             "pin": "<:shelly_thanks_pin:1273649037140168804>"
         },
         {
-            "id": 1,
             "name": "Rosa",
-            "icon": "<:rosa_portrait:1273650513551953940>",
+            "portrait": "<:rosa_portrait:1273650513551953940>",
             "pin": "<:rosa_thanks_pin:1273649604742615121>"
         },
         {
-            "id": 2,
             "name": "Poco",
-            "icon": "<:poco_portrait:1273650523798503424>",
+            "portrait": "<:poco_portrait:1273650523798503424>",
             "pin": "<:poco_thanks_pin:1273649661542010900>"
         },
         {
-            "id": 3,
             "name": "El Primo",
-            "icon": "<:elprimo_portrait:1273650534066421841>",
+            "portrait": "<:elprimo_portrait:1273650534066421841>",
             "pin": "<:primo_thanks_pin:1273649729695383582>"
         },
         {
-            "id": 4,
             "name": "Nita",
-            "icon": "<:nita_portrait:1273650542459093064>",
+            "portrait": "<:nita_portrait:1273650542459093064>",
             "pin": "<:nita_thanks_pin:1273649835634851900>"
         },
         {
-            "id": 5,
             "name": "Barley",
-            "icon": "<:barley_portrait:1273650574625210420>",
+            "portrait": "<:barley_portrait:1273650574625210420>",
             "pin": "<:barley_thanks_pin:1273649928035635220>"
         },
         {
-            "id": 6,
             "name": "Brock",
-            "icon": "<:brock_portrait:1273651146178695180>",
+            "portrait": "<:brock_portrait:1273651146178695180>",
             "pin": "<:brock_thanks_pin:1273651157012578415>"
         },
         {
-            "id": 7,
             "name": "Bull",
-            "icon": "<:bull_portrait:1273650585035345963>",
+            "portrait": "<:bull_portrait:1273650585035345963>",
             "pin": "<:bull_thanks_pin:1273650036797997187>"
         },
         {
-            "id": 8,
             "name": "Colt",
-            "icon": "<:colt_portrait:1273650593960951911>",
+            "portrait": "<:colt_portrait:1273650593960951911>",
             "pin": "<:colt_thanks_pin:1273650047807918242>"
+        }
+    ],
+
+    "Super Rare": [
+        {
+            "name": "Gus",
+            "portrait": "<:gus_portrait:1274730948469981208>",
+            "pin": "<:gus_thanks_pin:1274728212802572410>"
+        },
+        {
+            "name": "Jacky",
+            "portrait": "<:jacky_portrait:1274730939418935346>",
+            "pin": "<:jacky_thanks_pin:1274728204329816094>"
+        },
+        {
+            "name": "8-Bit",
+            "portrait": "<:8bit_portrait:1274730929830498325>",
+            "pin": "<:8bit_thanks_pin:1274728195920236634>"
+        },
+        {
+            "name": "Carl",
+            "portrait": "<:carl_portrait:1274730919738998795>",
+            "pin": "<:carl_thanks_pin:1274728187963768872>"
+        },
+        {
+            "name": "Tick",
+            "portrait": "<:tick_portrait:1274730911405051924>",
+            "pin": "<:tick_thanks_pin:1274728179373834373>"
+        },
+        {
+            "name": "Penny",
+            "portrait": "<:penny_portrait:1274730901905080411>",
+            "pin": "<:emoji_penny_thanks:1274728170201026690>"
+        },
+        {
+            "name": "Darryl",
+            "portrait": "<:darryl_portrait:1274730891465199616>",
+            "pin": "<:darryl_thanks_pin:1274728161535459432>"
+        },
+        {
+            "name": "Dynamike",
+            "portrait": "<:dynamike_portrait:1274730882128941178>",
+            "pin": "<:dynamike_thanks_pin:1274728152639475722>"
+        },
+        {
+            "name": "Jessie",
+            "portrait": "<:jessie_portrait:1274730872762798172>",
+            "pin": "<:jessie_thanks_pin:1274728142400917557>"
+        },
+        {
+            "name": "Rico",
+            "portrait": "<:rico_portrait:1274730864034447391>",
+            "pin": "<:rico_thanks_pin:1274728133873897473>"
+        }
+    ],
+
+    "Epic": [
+        {
+            "name": "Bo",
+            "portrait": "<:bo_portrait:1274742031112994948>",
+            "pin": "<:bo_thanks_pin:1274738609165045770>"
+        },
+        {
+            "name": "Piper",
+            "portrait": "<:piper_portrait:1274742089011302422>",
+            "pin": "<:piper_thanks_pin:1274738597441835039>"
+        },
+        {
+            "name": "Pam",
+            "portrait": "<:pam_portrait:1274742098339561543>",
+            "pin": "<:pam_thanks_pin:1274738589665853521>"
+        },
+        {
+            "name": "Frank",
+            "portrait": "<:frank_portrait:1274742106442956972>",
+            "pin": "<:frank_thanks_pin:1274738579712508051>"
+        },
+        {
+            "name": "Bibi",
+            "portrait": "<:bibi_portrait:1274742133818916985>",
+            "pin": "<:bibi_thanks_pin:1274738570724114453>"
+        },
+        {
+            "name": "Bea",
+            "portrait": "<:bea_portrait:1274742144531431468>",
+            "pin": "<:bea_thanks_pin:1274738562608267274>"
+        },
+        {
+            "name": "Emz",
+            "portrait": "<:emz_portrait:1274742155755130880>",
+            "pin": "<:emz_thanks_pin:1274738553921736815>"
+        },
+        {
+            "name": "Gale",
+            "portrait": "<:gale_portrait:1274742166039826452>",
+            "pin": "<:gale_thanks_pin:1274738544769892453>"
+        },
+        {
+            "name": "Nani",
+            "portrait": "<:nani_portrait:1274742174126178334>",
+            "pin": "<:nani_thanks_pin:1274738536591130721>"
+        },
+        {
+            "name": "Colette",
+            "portrait": "<:colette_portrait:1274742183378948177>",
+            "pin": "<:colette_thanks_pin:1274738528357711973>"
+        },
+        {
+            "name": "Edgar",
+            "portrait": "<:edgar_portrait:1274742196775551006>",
+            "pin": "<:edgar_thanks_pin:1274738519343890586>"
+        },
+        {
+            "name": "Stu",
+            "portrait": "<:stu_portrait:1274742207613505676>",
+            "pin": "<:Stu_PinThanks:1274738509147668482>"
+        },
+        {
+            "name": "Belle",
+            "portrait": "<:belle_portrait:1274742214433570939>",
+            "pin": "<:belle_thanks_pin:1274738490571227136>"
+        },
+        {
+            "name": "Grom",
+            "portrait": "<:grom_portrait:1274742251842437151>",
+            "pin": "<:grom_thanks_pin:1274738479515041843>"
+        },
+        {
+            "name": "Griff",
+            "portrait": "<:griff_portrait:1274742268539965592>",
+            "pin": "<:griff_thanks_pin:1274738469587128320>"
+        },
+        {
+            "name": "Ash",
+            "portrait": "<:ash_portrait:1274742281814937690>",
+            "pin": "<:ash_thanks_pin:1274738459650822198>"
+        },
+        {
+            "name": "Lola",
+            "portrait": "<:lola_portrait:1274742293311782963>",
+            "pin": "<:lola_thanks_pin:1274738451106758829>"
+        },
+        {
+            "name": "Bonnie",
+            "portrait": "<:bonnie_portrait:1274742304397332481>",
+            "pin": "<:bonnie_thanks_pin:1274738441430630505>"
+        },
+        {
+            "name": "Sam",
+            "portrait": "<:sam_portrait:1274742314635628554>",
+            "pin": "<:Sam_PinThanks:1274738433964769324>"
+        },
+        {
+            "name": "Mandy",
+            "portrait": "<:mandy_portrait:1274742335036719116>",
+            "pin": "<:mandy_thanks_pin:1274738424149971025>"
+        },
+        {
+            "name": "Maisie",
+            "portrait": "<:maisie_portrait:1274742344905916488>",
+            "pin": "<:maisie_thanks_pin:1274738413232193546>"
+        },
+        {
+            "name": "Hank",
+            "portrait": "<:hank_portrait:1274742352938008598>",
+            "pin": "<:hank_thanks_pin:1274738329761615905>"
+        },
+        {
+            "name": "Pearl",
+            "portrait": "<:pearl_portrait:1274742361238540348>",
+            "pin": "<:pearl_thanks_pin:1274738296127357002>"
+        },
+        {
+            "name": "Larry & Lawrie",
+            "portrait": "<:larryamplawrie_portrait:1274742376212070400>",
+            "pin": "<:larryamplawrie_thanks_pin:1274738288413900963>"
+        },
+        {
+            "name": "Angelo",
+            "portrait": "<:angelo_portrait:1274742388597719175>",
+            "pin": "<:angelo_thanks_pin:1274738271183700080>"
+        },
+        {
+            "name": "Berry",
+            "portrait": "<:berry_portrait:1274742408613200013>",
+            "pin": "<:berry_thanks_pin:1274736843589419140>"
         }
     ]
 }

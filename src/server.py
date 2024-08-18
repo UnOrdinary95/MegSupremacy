@@ -57,72 +57,6 @@ class Player():
         else:
             return player2
 
-class Pagination(discord.ui.View):
-    def __init__(self, interaction: discord.Interaction, get_page: Callable):
-        self.interaction = interaction
-        self.get_page = get_page
-        self.total_pages: Optional[int] = None
-        self.index = 1
-        super().__init__(timeout=100)
-
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if interaction.user == self.interaction.user:
-            return True
-        else:
-            emb = discord.Embed(
-                description=f"Only the author of the command can perform this action.",
-                color=16711680
-            )
-            await interaction.response.send_message(embed=emb, ephemeral=True)
-            return False
-
-    async def navegate(self):
-        emb, self.total_pages = await self.get_page(self.index)
-        if self.total_pages == 1:
-            await self.interaction.response.send_message(embed=emb)
-        elif self.total_pages > 1:
-            self.update_buttons()
-            await self.interaction.response.send_message(embed=emb, view=self)
-
-    async def edit_page(self, interaction: discord.Interaction):
-        emb, self.total_pages = await self.get_page(self.index)
-        self.update_buttons()
-        await interaction.response.edit_message(embed=emb, view=self)
-
-    def update_buttons(self):
-        if self.index > self.total_pages // 2:
-            self.children[2].emoji = "⏮️"
-        else:
-            self.children[2].emoji = "⏭️"
-        self.children[0].disabled = self.index == 1
-        self.children[1].disabled = self.index == self.total_pages
-
-    @discord.ui.button(emoji="◀️", style=discord.ButtonStyle.blurple)
-    async def previous(self, interaction: discord.Interaction, button: discord.Button):
-        self.index -= 1
-        await self.edit_page(interaction)
-
-    @discord.ui.button(emoji="▶️", style=discord.ButtonStyle.blurple)
-    async def next(self, interaction: discord.Interaction, button: discord.Button):
-        self.index += 1
-        await self.edit_page(interaction)
-
-    @discord.ui.button(emoji="⏭️", style=discord.ButtonStyle.blurple)
-    async def end(self, interaction: discord.Interaction, button: discord.Button):
-        if self.index <= self.total_pages//2:
-            self.index = self.total_pages
-        else:
-            self.index = 1
-        await self.edit_page(interaction)
-
-    async def on_timeout(self):
-        # remove buttons on timeout
-        message = await self.interaction.original_response()
-        await message.edit(view=None)
-
-    @staticmethod
-    def compute_total_pages(total_results: int, results_per_page: int) -> int:
-        return ((total_results - 1) // results_per_page) + 1
     
 class StartDraft_View(discord.ui.View):
     global message, player1, player2
@@ -425,6 +359,7 @@ class BanPhase_View(discord.ui.View):
             self.id_player = id_player
             self.parent = parent
             self.message = followup
+            self.brawler_view: 'BanPhase_View.Brawler_View'
 
             self.rarity_embed = discord.Embed(
                 title="⚠️DO NOT DISMISS THIS MESSAGE OR RESTART DISCORD⚠️",
@@ -442,7 +377,8 @@ class BanPhase_View(discord.ui.View):
                 self.add_item(self.parent.Rarity_Select(self.parent, self.id_player))
                 await self.message.edit(embed=self.rarity_embed, view=self)
             elif self.parent.state[self.id_player] == self.parent.BanSelectionState.BRAWLERS:
-                await self.message.edit(embed=self.brawler_embed, view=self.parent.Brawler_View(self.parent, self.id_player))
+                self.brawler_view = self.parent.Brawler_View(self.parent, self.id_player)
+                await self.message.edit(embed=self.brawler_embed, view=self.brawler_view)
 
     
     class Rarity_Select(discord.ui.Select):
@@ -459,7 +395,7 @@ class BanPhase_View(discord.ui.View):
             super().__init__(placeholder="Rarity", options=options)
 
         async def callback(self, interaction: discord.Interaction):
-            await interaction.response.defer()
+            await interaction.response.defer(ephemeral=True)
             self.parent.selected_rarity[self.id_player] = self.values[0]
             self.parent.state[self.id_player] = self.parent.BanSelectionState.BRAWLERS
             await self.parent.instance_view[self.id_player].update_view()
@@ -471,10 +407,10 @@ class BanPhase_View(discord.ui.View):
             self.parent = parent
             self.id_player = id_player
             self.total_buttons = self.button_amount()
-            self.buttons = []
-            self.add_brawlers_button()
+            self.buttons: List['discord.ui.Button'] = []
+            self.next_page = False
+            self.add_buttons()
 
-        
         def button_amount(self):
             match self.parent.selected_rarity[self.id_player]:
                 case "Starting & Rare":
@@ -488,31 +424,84 @@ class BanPhase_View(discord.ui.View):
                 case "Legendary":
                     return 11
         
-        def add_brawlers_button(self):
-            for id_brawler in range(self.total_buttons):
-                self.buttons.append(discord.ui.Button(
+        def add_buttons(self):
+            self.clear_items()
+
+            if self.next_page == True:
+                self.index = self.total_buttons
+                self.total_buttons += self.total_buttons
+            else:
+                self.index = 0
+                self.total_buttons = self.button_amount()
+            
+            self.buttons.clear()
+            for id_brawler in range(self.index, self.total_buttons):
+                button = discord.ui.Button(
                     emoji=data2[self.parent.selected_rarity[self.id_player]][id_brawler]["pin"], 
                     custom_id=str(id_brawler), 
-                    style=discord.ButtonStyle.blurple)
+                    style=discord.ButtonStyle.blurple
                 )
-                self.add_item(self.buttons[id_brawler])
+    
+                async def button_callback(interaction: discord.Interaction, button=button):
+                    await self.handle_button_click(interaction, button)
+    
+                button.callback = button_callback
+                self.buttons.append(button)
+                
 
-
-
+            for index in range(self.button_amount()):
+                self.add_item(self.buttons[index])
+            
+            self.add_item(self.parent.Return_Button(self.parent, self.id_player))
+            
+            if self.total_buttons >= 13:
+                self.add_item(self.parent.Paginator_Button(self.parent, self.id_player))
+        
+        async def handle_button_click(self, interaction: discord.Interaction, button: discord.ui.Button):
+            await interaction.response.defer(ephemeral=True)
+            self.parent.selected_brawler[self.id_player] = int(button.custom_id)
+            print(f"Tu as séléctionner : {data2[self.parent.selected_rarity[self.id_player]][self.parent.selected_brawler[self.id_player]]["name"]}")
+            self.parent.state[self.id_player] = self.parent.BanSelectionState.CONFIRM
+            await self.parent.instance_view[self.id_player].update_view()
 
 
 
     class Return_Button(discord.ui.Button):
-        pass
+        def __init__(self, parent: 'BanPhase_View', id_player):
+            self.parent = parent
+            self.id_player = id_player
+            super().__init__(label="Return", style=discord.ButtonStyle.gray)
 
-    
+        async def callback(self, interaction: discord.Interaction):
+            await interaction.response.defer(ephemeral=True)
+            self.parent.state[self.id_player] = self.parent.BanSelectionState.RARITY
+            await self.parent.instance_view[self.id_player].update_view()
+
+
+    class Paginator_Button(discord.ui.Button):
+        def __init__(self, parent: 'BanPhase_View', id_player):
+            self.parent = parent
+            self.id_player = id_player
+            super().__init__(label="⏪⏩", style=discord.ButtonStyle.green)
+
+        async def callback(self, interaction: discord.Interaction):
+            await interaction.response.defer(ephemeral=True)
+            if self.parent.instance_view[self.id_player].brawler_view.next_page == False:
+                self.parent.instance_view[self.id_player].brawler_view.next_page = True
+            else:
+                self.parent.instance_view[self.id_player].brawler_view.next_page = False
+
+            self.parent.instance_view[self.id_player].brawler_view.clear_items()
+            self.parent.instance_view[self.id_player].brawler_view.add_buttons()
+            await self.parent.instance_view[self.id_player].message.edit(view=self.parent.instance_view[self.id_player].brawler_view)
+
+
     class Accept_Button(discord.ui.Button):
         pass
 
 
     class Decline_Button(discord.ui.Button):
         pass
-
 
 
 # Événement qui se déclenche lorsque le bot est prêt et connecté à Discord
@@ -623,7 +612,6 @@ async def start_draft(interaction: discord.Interaction, user: discord.Member):
     await message.edit(view=ban_view)
     await ban_view.timer()
 
-
 @tree.command(name="timer", description="Start a countdown timer")
 async def timer(interaction: discord.Interaction):
     time = 60
@@ -653,7 +641,6 @@ async def timer(interaction: discord.Interaction):
     )
     await msg.edit(embed=done_embed)
 
-
 @tree.command(name="timer2", description="V2")
 async def timer2(interaction: discord.Interaction):
     time = 60
@@ -676,46 +663,6 @@ async def timer2(interaction: discord.Interaction):
 
         await msg.edit(embed=timer_embed)
         await asyncio.sleep(1)
-
-
-users = [f"User {i}" for i in range(1, 10000)]
-# This is a long list of results
-# I'm going to use pagination to display the data
-L = 10    # elements per page
-
-
-@tree.command(name="show")
-async def show(interaction: discord.Interaction):
-    async def get_page(page: int):
-        emb = discord.Embed(title="The Users", description="")
-        offset = (page-1) * L
-        for user in users[offset:offset+L]:
-            emb.description += f"{user}\n"
-        emb.set_author(name=f"Requested by {interaction.user}")
-        n = Pagination.compute_total_pages(len(users), L)
-        emb.set_footer(text=f"Page {page} from {n}")
-        return emb, n
-
-    await Pagination(interaction, get_page).navegate()
-
-
-class Paginator(discord.ui.View):
-    def __init__(self, message):
-        super().__init__(timeout=None)
-        self.message = message
-        self.button = [
-            discord.ui.Button(label="A", style=discord.ButtonStyle.gray),
-            discord.ui.Button(label="B", style=discord.ButtonStyle.gray),
-            discord.ui.Button(label="C", style=discord.ButtonStyle.gray),
-            discord.ui.Button(label="D", style=discord.ButtonStyle.gray),
-            discord.ui.Button(label="⏩", style=discord.ButtonStyle.gray)
-        ]
-
-    def initial_config(self):
-        self.add_item(self.button[0])
-        self.add_item(self.button[1])
-
-
 
 
 # Démarrage du bot avec le token récupéré depuis les variables d'environnement
