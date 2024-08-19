@@ -231,5 +231,196 @@
             "portrait": "<:berry_portrait:1274742408613200013>",
             "pin": "<:berry_thanks_pin:1274736843589419140>"
         }
+    ],
+
+    "Mythic": [
+        {
+            "name": "Mortis",
+            "portrait": "",
+            "pin": ""
+        },
+        {
+            "name": "Tara",
+            "portrait": "",
+            "pin": ""
+        },
+        {
+            "name": "Gene",
+            "portrait": "",
+            "pin": ""
+        },
+        {
+            "name": "Mr. P",
+            "portrait": "",
+            "pin": ""
+        },
+        {
+            "name": "Max",
+            "portrait": "",
+            "pin": ""
+        },
+        {
+            "name": "Sprout",
+            "portrait": "",
+            "pin": ""
+        },
+        {
+            "name": "Lou",
+            "portrait": "",
+            "pin": ""
+        },
+        {
+            "name": "Byron",
+            "portrait": "",
+            "pin": ""
+        },
+        {
+            "name": "Ruffs",
+            "portrait": "",
+            "pin": ""
+        },
+        {
+            "name": "Squeak",
+            "portrait": "",
+            "pin": ""
+        },
+        {
+            "name": "Buzz",
+            "portrait": "",
+            "pin": ""
+        },
+        {
+            "name": "Fang",
+            "portrait": "",
+            "pin": ""
+        },
+        {
+            "name": "Eve",
+            "portrait": "",
+            "pin": ""
+        },
+        {
+            "name": "Janet",
+            "portrait": "",
+            "pin": ""
+        },
+        {
+            "name": "Otis",
+            "portrait": "",
+            "pin": ""
+        },
+        {
+            "name": "Buster",
+            "portrait": "",
+            "pin": ""
+        },
+        {
+            "name": "Gray",
+            "portrait": "",
+            "pin": ""
+        },
+        {
+            "name": "R-T",
+            "portrait": "",
+            "pin": ""
+        },
+        {
+            "name": "Willow",
+            "portrait": "",
+            "pin": ""
+        },
+        {
+            "name": "Doug",
+            "portrait": "",
+            "pin": ""
+        },
+        {
+            "name": "Chuck",
+            "portrait": "",
+            "pin": ""
+        },
+        {
+            "name": "Charlie",
+            "portrait": "",
+            "pin": ""
+        },
+        {
+            "name": "Mico",
+            "portrait": "",
+            "pin": ""
+        },
+        {
+            "name": "Melodie",
+            "portrait": "",
+            "pin": ""
+        },
+        {
+            "name": "Lily",
+            "portrait": "",
+            "pin": ""
+        },
+        {
+            "name": "Clancy",
+            "portrait": "",
+            "pin": ""
+        }
+    ],
+
+    "Legendary": [
+        {
+            "name": "Spike",
+            "portrait": "<:spike_portrait:1275104232395247646>",
+            "pin": "<:spike_thanks_pin:1275102866352378026>"
+        },
+        {
+            "name": "Crow",
+            "portrait": "<:crow_portrait:1275104246886432798>",
+            "pin": "<:crow_thanks_pin:1275102875831238674>"
+        },
+        {
+            "name": "Leon",
+            "portrait": "<:leon_portrait:1275104257728712735>",
+            "pin": "<:leon_thanks_pin:1275102884752789597>"
+        },
+        {
+            "name": "Sandy",
+            "portrait": "<:sandy_portrait:1275104268201758741>",
+            "pin": "<:sandy_thanks_pin:1275102894785302638>"
+        },
+        {
+            "name": "Surge",
+            "portrait": "<:surge_portrait:1275104279526510705>",
+            "pin": "<:surge_thanks_pin:1275102904503636042>"
+        },
+        {
+            "name": "Amber",
+            "portrait": "<:amber_portrait:1275104290062733406>",
+            "pin": "<:amber_thanks_pin:1275102914012123219>"
+        },
+        {
+            "name": "Meg",
+            "portrait": "<:meg_portrait:1275104301261262848>",
+            "pin": "<:meg_thanks_pin:1275102922371239940>"
+        },
+        {
+            "name": "Chester",
+            "portrait": "<:chester_portrait:1275104311927635989>",
+            "pin": "<:chester_thanks_pin:1275102931225411625>"
+        },
+        {
+            "name": "Cordelius",
+            "portrait": "<:cordelius_portrait:1275104323713372170>",
+            "pin": "<:cordelius_pin_thanks:1275102939643641907>"
+        },
+        {
+            "name": "Kit",
+            "portrait": "<:kit_portrait:1275104333909721173>",
+            "pin": "<:kit_thanks_pin:1275102948678041663>"
+        },
+        {
+            "name": "Draco",
+            "portrait": "<:draco_portrait:1275104343447830540>",
+            "pin": "<:draco_thanks_pin:1275102957263781969>"
+        }
     ]
 }

@@ -288,10 +288,11 @@ class BanPhase_View(discord.ui.View):
         self.instance_view: List[Optional['BanPhase_View.Player_View']] = [None, None]  # Need typing Optional ==> Indique que la liste peut etre None ou PlayerView  
         self.selected_rarity = ["", ""] 
         self.selected_brawler = [-1, -1]
-        self.banned_brawler = {
-            self.first_pick.user.nick: [{"Rarity": "", "Id_Brawler": -1},{"Rarity": "", "Id_Brawler": -1},{"Rarity": "", "Id_Brawler": -1}],
-            self.last_pick.user.nick: [{"Rarity": "", "Id_Brawler": -1},{"Rarity": "", "Id_Brawler": -1},{"Rarity": "", "Id_Brawler": -1}]
-            }
+        self.banned_brawler = [
+            [{"Rarity": "", "Id_Brawler": -1},{"Rarity": "", "Id_Brawler": -1},{"Rarity": "", "Id_Brawler": -1}],
+            [{"Rarity": "", "Id_Brawler": -1},{"Rarity": "", "Id_Brawler": -1},{"Rarity": "", "Id_Brawler": -1}]
+        ]
+        self.remaining_bans = [3,3]
         self.state = [self.BanSelectionState.RARITY, self.BanSelectionState.RARITY]
         self.is_ended = False
 
@@ -361,6 +362,7 @@ class BanPhase_View(discord.ui.View):
             self.message = followup
             self.brawler_view: 'BanPhase_View.Brawler_View'
 
+
             self.rarity_embed = discord.Embed(
                 title="⚠️DO NOT DISMISS THIS MESSAGE OR RESTART DISCORD⚠️",
                 description=f"Your Bans : {self.parent.emote_tbd} {self.parent.emote_tbd} {self.parent.emote_tbd}\nPlease choose a rarity :"
@@ -369,6 +371,11 @@ class BanPhase_View(discord.ui.View):
             self.brawler_embed = discord.Embed(
                 title="⚠️DO NOT DISMISS THIS MESSAGE OR RESTART DISCORD⚠️",
                 description=f"Your Bans : {self.parent.emote_tbd} {self.parent.emote_tbd} {self.parent.emote_tbd}\nPlease choose a brawler :"
+            )
+
+            self.confirm_embed = discord.Embed(
+                title="⚠️DO NOT DISMISS THIS MESSAGE OR RESTART DISCORD⚠️",
+                description=f"Your Bans : {self.parent.emote_tbd} {self.parent.emote_tbd} {self.parent.emote_tbd}\nDo you want to ban {data2[self.parent.selected_rarity[self.id_player]][self.parent.selected_brawler[self.id_player]]["name"]} ?"
             )
         
         async def update_view(self):
@@ -379,6 +386,11 @@ class BanPhase_View(discord.ui.View):
             elif self.parent.state[self.id_player] == self.parent.BanSelectionState.BRAWLERS:
                 self.brawler_view = self.parent.Brawler_View(self.parent, self.id_player)
                 await self.message.edit(embed=self.brawler_embed, view=self.brawler_view)
+            elif self.parent.state[self.id_player] == self.parent.BanSelectionState.CONFIRM:
+                self.add_item(self.parent.Accept_Button(self.parent, self.id_player))
+                self.add_item(self.parent.Decline_Button(self.parent, self.id_player))
+                await self.message.edit(embed=self.confirm_embed, view=self)
+
 
     
     class Rarity_Select(discord.ui.Select):
@@ -465,7 +477,6 @@ class BanPhase_View(discord.ui.View):
             await self.parent.instance_view[self.id_player].update_view()
 
 
-
     class Return_Button(discord.ui.Button):
         def __init__(self, parent: 'BanPhase_View', id_player):
             self.parent = parent
@@ -497,11 +508,42 @@ class BanPhase_View(discord.ui.View):
 
 
     class Accept_Button(discord.ui.Button):
-        pass
+        def __init__(self, parent: 'BanPhase_View', id_player):
+            self.parent = parent
+            self.id_player = id_player
+            super().__init__(label="Accept", style=discord.ButtonStyle.blurple)
+        
+        async def callback(self, interaction: discord.Interaction):
+            await interaction.response.defer(ephemeral=True)
 
+            self.index_brawler = (3 - self.parent.remaining_bans[self.id_player]) % 3
+            self.parent.banned_brawler[self.id_player][self.index_brawler]["Rarity"] = self.parent.selected_rarity[self.id_player]
+            self.parent.banned_brawler[self.id_player][self.index_brawler]["Id_Brawler"] = self.parent.selected_brawler[self.id_player]
+            self.parent.remaining_bans[self.id_player] -= 1
+
+            if self.parent.remaining_bans[self.id_player] > 0:
+                self.parent.state[self.id_player] = self.parent.BanSelectionState.RARITY
+                await self.parent.instance_view[self.id_player].update_view()
+            else:
+                self.parent.is_ended = True
+                self.ended_embed = discord.Embed(
+                    title="YOU CAN NOW DISMISS THIS MESSAGE",
+                    description=f"Your Bans: 
+                    {data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} {data2[self.parent.banned_brawler[self.id_player][1]["Rarity"]][self.parent.banned_brawler[self.id_player][1]["Id_Brawler"]]["portrait"]} {data2[self.parent.banned_brawler[self.id_player][2]["Rarity"]][self.parent.banned_brawler[self.id_player][2]["Id_Brawler"]]["portrait"]}"
+                )
+                self.parent.instance_view[self.id_player].message.edit(embed=self.ended_embed, view=None)
+                ###################################### CONTINUE HERE
 
     class Decline_Button(discord.ui.Button):
-        pass
+        def __init__(self, parent: 'BanPhase_View', id_player):
+            self.parent = parent
+            self.id_player = id_player
+            super().__init__(label="Decline", style=discord.ButtonStyle.danger)
+        
+        async def callback(self, interaction: discord.Interaction):
+            await interaction.response.defer(ephemeral=True)
+            self.parent.state[self.id_player] = self.parent.BanSelectionState.RARITY
+            await self.parent.instance_view[self.id_player].update_view()
 
 
 # Événement qui se déclenche lorsque le bot est prêt et connecté à Discord
