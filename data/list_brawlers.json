@@ -236,132 +236,137 @@
     "Mythic": [
         {
             "name": "Mortis",
-            "portrait": "",
+            "portrait": "<:mortis_portrait:1288198688505597983>",
             "pin": ""
         },
         {
             "name": "Tara",
-            "portrait": "",
+            "portrait": "<:tara_portrait:1288198680305733692>",
             "pin": ""
         },
         {
             "name": "Gene",
-            "portrait": "",
+            "portrait": "<:gene_portrait:1288198669912248382>",
             "pin": ""
         },
         {
             "name": "Mr. P",
-            "portrait": "",
+            "portrait": "<:mrp_portrait:1288198662727532726>",
             "pin": ""
         },
         {
             "name": "Max",
-            "portrait": "",
+            "portrait": "<:max_portrait:1288198653713973280>",
             "pin": ""
         },
         {
             "name": "Sprout",
-            "portrait": "",
+            "portrait": "<:sprout_portrait:1288198640032288889>",
             "pin": ""
         },
         {
             "name": "Lou",
-            "portrait": "",
+            "portrait": "<:lou_portrait:1288198631597408256>",
             "pin": ""
         },
         {
             "name": "Byron",
-            "portrait": "",
+            "portrait": "<:byron_portrait:1288198431214403727>",
             "pin": ""
         },
         {
             "name": "Ruffs",
-            "portrait": "",
+            "portrait": "<:ruffs_portrait:1288198420346966100>",
             "pin": ""
         },
         {
             "name": "Squeak",
-            "portrait": "",
+            "portrait": "<:squeak_portrait:1288198408422686842>",
             "pin": ""
         },
         {
             "name": "Buzz",
-            "portrait": "",
+            "portrait": "<:buzz_portrait:1288198396162871410>",
             "pin": ""
         },
         {
             "name": "Fang",
-            "portrait": "",
+            "portrait": "<:fang_portrait:1288198383147679875>",
             "pin": ""
         },
         {
             "name": "Eve",
-            "portrait": "",
+            "portrait": "<:eve_portrait:1288198364713717882>",
             "pin": ""
         },
         {
             "name": "Janet",
-            "portrait": "",
+            "portrait": "<:janet_portrait:1288198354098065508>",
             "pin": ""
         },
         {
             "name": "Otis",
-            "portrait": "",
+            "portrait": "<:otis_portrait:1288198341410422926>",
             "pin": ""
         },
         {
             "name": "Buster",
-            "portrait": "",
+            "portrait": "<:buster_portrait:1288198328835641375>",
             "pin": ""
         },
         {
             "name": "Gray",
-            "portrait": "",
+            "portrait": "<:gray_portrait:1288198317360152597>",
             "pin": ""
         },
         {
             "name": "R-T",
-            "portrait": "",
+            "portrait": "<:rt_portrait:1288198297043079303>",
             "pin": ""
         },
         {
             "name": "Willow",
-            "portrait": "",
+            "portrait": "<:willow_portrait:1288198282539040790>",
             "pin": ""
         },
         {
             "name": "Doug",
-            "portrait": "",
+            "portrait": "<:doug_portrait:1288198270514106460>",
             "pin": ""
         },
         {
             "name": "Chuck",
-            "portrait": "",
+            "portrait": "<:chuck_portrait:1288198259046748201>",
             "pin": ""
         },
         {
             "name": "Charlie",
-            "portrait": "",
+            "portrait": "<:charlie_portrait:1288198248665845911>",
             "pin": ""
         },
         {
             "name": "Mico",
-            "portrait": "",
+            "portrait": "<:mico_portrait:1288198239064952955>",
             "pin": ""
         },
         {
             "name": "Melodie",
-            "portrait": "",
+            "portrait": "<:melodie_portrait:1288198226582962258>",
             "pin": ""
         },
         {
             "name": "Lily",
-            "portrait": "",
+            "portrait": "<:lily_portrait:1288198215287705650>",
             "pin": ""
         },
         {
             "name": "Clancy",
-            "portrait": "",
+            "portrait": "<:clancy_portrait:1288198204877176924>",
+            "pin": ""
+        },
+        {
+            "name": "Moe",
+            "portrait": "<:moe_portrait:1288199060276248828>",
             "pin": ""
         }
     ],
@@ -421,6 +426,11 @@
             "name": "Draco",
             "portrait": "<:draco_portrait:1275104343447830540>",
             "pin": "<:draco_thanks_pin:1275102957263781969>"
+        },
+        {
+            "name": "Kenji",
+            "portrait": "<:kenji_portrait:1288199071139496008>",
+            "pin": "<:kenji_thanks_pin:1288199499096920104>"
         }
     ]
 }

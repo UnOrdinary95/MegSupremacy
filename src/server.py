@@ -19,8 +19,8 @@ client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
 # Chemin relatif vers le fichier JSON
-path = os.path.join("data","map.json")
-path2 = os.path.join("data", "list_brawlers.json")
+path = os.path.join("..","data","map.json")
+path2 = os.path.join("..", "data", "list_brawlers.json")
 
 # Charge les fichiers JSON
 with open(path, "r") as file:
@@ -375,7 +375,8 @@ class BanPhase_View(discord.ui.View):
 
             self.confirm_embed = discord.Embed(
                 title="⚠️DO NOT DISMISS THIS MESSAGE OR RESTART DISCORD⚠️",
-                description=f"Your Bans : {self.parent.emote_tbd} {self.parent.emote_tbd} {self.parent.emote_tbd}\nDo you want to ban {data2[self.parent.selected_rarity[self.id_player]][self.parent.selected_brawler[self.id_player]]["name"]} ?"
+                # description=f"Your Bans : {self.parent.emote_tbd} {self.parent.emote_tbd} {self.parent.emote_tbd}\nDo you want to ban {data2[self.parent.selected_rarity[self.id_player]][self.parent.selected_brawler[self.id_player]]["name"]} ?"
+                description=f"Your Bans : {self.parent.emote_tbd} {self.parent.emote_tbd} {self.parent.emote_tbd}\nDo you want to ban truc?"
             )
         
         async def update_view(self):
@@ -528,8 +529,7 @@ class BanPhase_View(discord.ui.View):
                 self.parent.is_ended = True
                 self.ended_embed = discord.Embed(
                     title="YOU CAN NOW DISMISS THIS MESSAGE",
-                    description=f"Your Bans: 
-                    {data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} {data2[self.parent.banned_brawler[self.id_player][1]["Rarity"]][self.parent.banned_brawler[self.id_player][1]["Id_Brawler"]]["portrait"]} {data2[self.parent.banned_brawler[self.id_player][2]["Rarity"]][self.parent.banned_brawler[self.id_player][2]["Id_Brawler"]]["portrait"]}"
+                    description=f"Your Bans:{data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} {data2[self.parent.banned_brawler[self.id_player][1]["Rarity"]][self.parent.banned_brawler[self.id_player][1]["Id_Brawler"]]["portrait"]} {data2[self.parent.banned_brawler[self.id_player][2]["Rarity"]][self.parent.banned_brawler[self.id_player][2]["Id_Brawler"]]["portrait"]}"
                 )
                 self.parent.instance_view[self.id_player].message.edit(embed=self.ended_embed, view=None)
                 ###################################### CONTINUE HERE
