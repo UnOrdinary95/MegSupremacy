@@ -529,9 +529,9 @@ class BanPhase_View(discord.ui.View):
                 self.parent.is_ended = True
                 self.ended_embed = discord.Embed(
                     title="YOU CAN NOW DISMISS THIS MESSAGE",
-                    description=f"Your Bans:{data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} {data2[self.parent.banned_brawler[self.id_player][1]["Rarity"]][self.parent.banned_brawler[self.id_player][1]["Id_Brawler"]]["portrait"]} {data2[self.parent.banned_brawler[self.id_player][2]["Rarity"]][self.parent.banned_brawler[self.id_player][2]["Id_Brawler"]]["portrait"]}"
+                    description=f"Your Bans : {data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} {data2[self.parent.banned_brawler[self.id_player][1]["Rarity"]][self.parent.banned_brawler[self.id_player][1]["Id_Brawler"]]["portrait"]} {data2[self.parent.banned_brawler[self.id_player][2]["Rarity"]][self.parent.banned_brawler[self.id_player][2]["Id_Brawler"]]["portrait"]}"
                 )
-                self.parent.instance_view[self.id_player].message.edit(embed=self.ended_embed, view=None)
+                await self.parent.instance_view[self.id_player].message.edit(embed=self.ended_embed, view=None)
                 ###################################### CONTINUE HERE
 
     class Decline_Button(discord.ui.Button):
@@ -610,7 +610,7 @@ async def start_draft(interaction: discord.Interaction, user: discord.Member):
     ts = set_timer(60)
 
     start_embed = discord.Embed(
-        title="Inv",
+        title="Invitation",
         description=f"{interaction.user.mention} wants to practice his drafting skills with you !"
     )
     view = StartDraft_View()
