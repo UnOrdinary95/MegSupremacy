@@ -379,6 +379,22 @@ class BanPhase_View(discord.ui.View):
                 description=f"Your Bans : {self.parent.emote_tbd} {self.parent.emote_tbd} {self.parent.emote_tbd}\nDo you want to ban truc?"
             )
         
+
+        async def update_embed(self):
+            match(self.parent.remaining_bans[self.id_player]):
+                case 3:
+                    self.rarity_embed.description=f"Your Bans : {self.parent.emote_tbd} {self.parent.emote_tbd} {self.parent.emote_tbd}\nPlease choose a rarity :"
+                    self.brawler_embed.description=f"Your Bans : {self.parent.emote_tbd} {self.parent.emote_tbd} {self.parent.emote_tbd}\nPlease choose a brawler :"
+                    self.confirm_embed.description=f"Your Bans : {self.parent.emote_tbd} {self.parent.emote_tbd} {self.parent.emote_tbd}\nDo you want to ban {data2[]}"
+                case 2:
+                    self.rarity_embed.description=f"Your Bans : {data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} {self.parent.emote_tbd} {self.parent.emote_tbd}\nPlease choose a rarity :"
+                    self.brawler_embed.description=f"Your Bans : {data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} {self.parent.emote_tbd} {self.parent.emote_tbd}\nPlease choose a brawler :"
+                case 1:
+                    print("a")
+                    # Instruction
+                case _: # Default
+                    print("a")
+
         async def update_view(self):
             self.clear_items()
             if self.parent.state[self.id_player] == self.parent.BanSelectionState.RARITY:
