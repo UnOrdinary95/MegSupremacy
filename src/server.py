@@ -294,7 +294,7 @@ class BanPhase_View(discord.ui.View):
         ]
         self.remaining_bans = [3,3]
         self.state = [self.BanSelectionState.RARITY, self.BanSelectionState.RARITY]
-        self.is_ended = False
+        self.is_ended = [False, False]
 
         self.instance_embed = discord.Embed(
             title="⚠️DO NOT DISMISS THIS MESSAGE OR RESTART DISCORD⚠️",
@@ -385,48 +385,51 @@ class BanPhase_View(discord.ui.View):
                         self.brawler_embed.description=f"Your Bans : {self.parent.emote_tbd} {self.parent.emote_tbd} {self.parent.emote_tbd}\nPlease choose a brawler :"
                     
                     if(self.parent.state[self.id_player] == self.parent.BanSelectionState.CONFIRM):
-                        self.confirm_embed.description=f"""
-                        Your Bans : {self.parent.emote_tbd} {self.parent.emote_tbd} {self.parent.emote_tbd}\nDo you want to ban 
-                        {data2[self.parent.selected_rarity[self.id_player]][self.parent.selected_brawler[self.id_player]]["portrait"]} ?"""
+                        self.confirm_embed.description=(
+                        f"Your Bans : {self.parent.emote_tbd} {self.parent.emote_tbd} {self.parent.emote_tbd}\nDo you want to ban : "
+                        f"{data2[self.parent.selected_rarity[self.id_player]][self.parent.selected_brawler[self.id_player]]["portrait"]} ?"
+                        )
                 case 2:
                     if(self.parent.state[self.id_player] == self.parent.BanSelectionState.RARITY):
-                        self.rarity_embed.description=f"""
-                        Your Bans : {data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} 
-                        {self.parent.emote_tbd} {self.parent.emote_tbd}\nPlease choose a rarity :"""
+                        self.rarity_embed.description=(
+                        f"Your Bans : {data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} "
+                        f"{self.parent.emote_tbd} {self.parent.emote_tbd}\nPlease choose a rarity :"
+                        )
                     
                     if(self.parent.state[self.id_player] == self.parent.BanSelectionState.BRAWLERS):
-                        self.brawler_embed.description=f"""
-                        Your Bans : {data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} 
-                        {self.parent.emote_tbd} {self.parent.emote_tbd}\nPlease choose a brawler :"""
-                    
-                    if(self.parent.state[self.id_player] == self.parent.BanSelectionState.CONFIRM):
-                        self.confirm_embed.description=f"""
-                        Your Bans : {data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} 
-                        {self.parent.emote_tbd} {self.parent.emote_tbd}\nDo you want to ban 
-                        {data2[self.parent.selected_rarity[self.id_player]][self.parent.selected_brawler[self.id_player]]["portrait"]} ?"""
-                case 1:
-                    if(self.parent.state[self.id_player] == self.parent.BanSelectionState.RARITY):
-                        self.rarity_embed.description=f"""
-                        Your Bans : {data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} 
-                        {data2[self.parent.banned_brawler[self.id_player][1]["Rarity"]][self.parent.banned_brawler[self.id_player][1]["Id_Brawler"]]["portrait"]} 
-                        {self.parent.emote_tbd}\nPlease choose a rarity :"""
-                    
-                    if(self.parent.state[self.id_player] == self.parent.BanSelectionState.BRAWLERS):
-                        self.brawler_embed.description=f"""
-                        Your Bans : {data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} 
-                        {data2[self.parent.banned_brawler[self.id_player][1]["Rarity"]][self.parent.banned_brawler[self.id_player][1]["Id_Brawler"]]["portrait"]} 
-                        {self.parent.emote_tbd}\nPlease choose a brawler :"""
+                        self.brawler_embed.description=(
+                        f"Your Bans : {data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} "
+                        f"{self.parent.emote_tbd} {self.parent.emote_tbd}\nPlease choose a brawler :"
+                        )
                     
                     if(self.parent.state[self.id_player] == self.parent.BanSelectionState.CONFIRM):
                         self.confirm_embed.description=(
                         f"Your Bans : {data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} " 
-                        f"{data2[self.parent.banned_brawler[self.id_player][1]["Rarity"]][self.parent.banned_brawler[self.id_player][1]["Id_Brawler"]]["portrait"]} "
-                        f"{self.parent.emote_tbd}\nDo you want to ban " 
+                        f"{self.parent.emote_tbd} {self.parent.emote_tbd}\nDo you want to ban : "
                         f"{data2[self.parent.selected_rarity[self.id_player]][self.parent.selected_brawler[self.id_player]]["portrait"]} ?"
                         )
-                        
+                case 1:
+                    if(self.parent.state[self.id_player] == self.parent.BanSelectionState.RARITY):
+                        self.rarity_embed.description=(
+                        f"Your Bans : {data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} "
+                        f"{data2[self.parent.banned_brawler[self.id_player][1]["Rarity"]][self.parent.banned_brawler[self.id_player][1]["Id_Brawler"]]["portrait"]} "
+                        f"{self.parent.emote_tbd}\nPlease choose a rarity :"
+                        )
+                
+                    if(self.parent.state[self.id_player] == self.parent.BanSelectionState.BRAWLERS):
+                        self.brawler_embed.description=(
+                        f"Your Bans : {data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} " 
+                        f"{data2[self.parent.banned_brawler[self.id_player][1]["Rarity"]][self.parent.banned_brawler[self.id_player][1]["Id_Brawler"]]["portrait"]} "
+                        f"{self.parent.emote_tbd}\nPlease choose a brawler :"
+                        )
 
-
+                    if(self.parent.state[self.id_player] == self.parent.BanSelectionState.CONFIRM):
+                        self.confirm_embed.description=(
+                        f"Your Bans : {data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} " 
+                        f"{data2[self.parent.banned_brawler[self.id_player][1]["Rarity"]][self.parent.banned_brawler[self.id_player][1]["Id_Brawler"]]["portrait"]} "
+                        f"{self.parent.emote_tbd}\nDo you want to ban : " 
+                        f"{data2[self.parent.selected_rarity[self.id_player]][self.parent.selected_brawler[self.id_player]]["portrait"]} ?"
+                        )
 
         async def update_view(self):
             self.clear_items()
@@ -577,13 +580,14 @@ class BanPhase_View(discord.ui.View):
                 self.parent.state[self.id_player] = self.parent.BanSelectionState.RARITY
                 await self.parent.instance_view[self.id_player].update_view()
             else:
-                self.parent.is_ended = True
+                self.parent.is_ended[self.id_player] = True
                 self.ended_embed = discord.Embed(
                     title="YOU CAN NOW DISMISS THIS MESSAGE",
                     description=f"Your Bans : {data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} {data2[self.parent.banned_brawler[self.id_player][1]["Rarity"]][self.parent.banned_brawler[self.id_player][1]["Id_Brawler"]]["portrait"]} {data2[self.parent.banned_brawler[self.id_player][2]["Rarity"]][self.parent.banned_brawler[self.id_player][2]["Id_Brawler"]]["portrait"]}"
                 )
                 await self.parent.instance_view[self.id_player].message.edit(embed=self.ended_embed, view=None)
-                ###################################### CONTINUE HERE
+                self.parent.stop()
+
 
     class Decline_Button(discord.ui.Button):
         def __init__(self, parent: 'BanPhase_View', id_player):
@@ -677,7 +681,6 @@ async def start_draft(interaction: discord.Interaction, user: discord.Member):
     # Vue 'start_draft' terminé ?
     if(view.is_ended == True):
         global map_view
-        print("\nPHASE => 'choose_map'")
 
         await message.edit(view=None)
         map_view = ChooseMap_View()
@@ -695,15 +698,16 @@ async def start_draft(interaction: discord.Interaction, user: discord.Member):
 
     # Vue 'chooseMap' terminé ?
     if(map_view.is_ended == True):
-        print("\nPHASE => 'coin_flip'")
-        await cf_phase()
+        await message.edit(view=None)
+        ban_view = BanPhase_View()
+        await message.edit(view=ban_view)
+        await ban_view.timer()
     else:
         sys.exit("\nSomething unexpected happened.")
-    
-    await message.edit(view=None)
-    ban_view = BanPhase_View()
-    await message.edit(view=ban_view)
-    await ban_view.timer()
+
+    # Vue 'Ban' terminé ?
+
+
 
 @tree.command(name="timer", description="Start a countdown timer")
 async def timer(interaction: discord.Interaction):
