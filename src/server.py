@@ -301,6 +301,16 @@ class BanPhase_View(discord.ui.View):
             description=f"Your Bans : {self.emote_tbd} {self.emote_tbd} {self.emote_tbd}\nPlease choose a rarity :"
         )
 
+
+    # # Attendre que le bouton soit cliqué ou que le timeout soit atteint
+    # timeout = await map_view.wait()
+    # if(timeout):
+    #     await message.edit(content="The invitation has timed out.", view=None)
+    async def stop_ban_phase(self):
+        timeout1 = await self.instance_view[0].wait()
+        timeout2 = await self.instance_view[1].wait()
+        self.stop()
+
     def update_button_labels(self):
         self.buttons[0].label = f"Click here {self.first_pick.user.nick} !"
         self.buttons[1].label = f"Click here {self.last_pick.user.nick} !"
@@ -586,7 +596,9 @@ class BanPhase_View(discord.ui.View):
                     description=f"Your Bans : {data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} {data2[self.parent.banned_brawler[self.id_player][1]["Rarity"]][self.parent.banned_brawler[self.id_player][1]["Id_Brawler"]]["portrait"]} {data2[self.parent.banned_brawler[self.id_player][2]["Rarity"]][self.parent.banned_brawler[self.id_player][2]["Id_Brawler"]]["portrait"]}"
                 )
                 await self.parent.instance_view[self.id_player].message.edit(embed=self.ended_embed, view=None)
-                self.parent.stop()
+                self.parent.instance_view[self.id_player].stop()
+                if(self.parent.is_ended[0] and self.parent.is_ended[1]):
+                    await self.parent.stop_ban_phase()
 
 
     class Decline_Button(discord.ui.Button):
@@ -705,7 +717,31 @@ async def start_draft(interaction: discord.Interaction, user: discord.Member):
     else:
         sys.exit("\nSomething unexpected happened.")
 
+    # Attendre que le bouton soit cliqué ou que le timeout soit atteint
+    timeout = await map_view.wait()
+    if(timeout):
+        await message.edit(content="The invitation has timed out.", view=None)
+
     # Vue 'Ban' terminé ?
+    if(ban_view.is_ended[0] == 1 and ban_view.is_ended[1] == 1):
+        await message.edit(view=None)
+        test_embed = discord.Embed(
+            title=f"═════════════════════════════\n[DRAFT SIMULATION]\n[BAN PHASE]\n═════════════════════════════",
+            description=(
+                f"{ban_view.first_pick.user.nick}'s Bans : "
+                f"{data2[ban_view.instance_view[0].parent.banned_brawler[0][0]["Rarity"]][ban_view.instance_view[0].parent.banned_brawler[0][0]["Id_Brawler"]]["portrait"]} "
+                f"{data2[ban_view.instance_view[0].parent.banned_brawler[0][1]["Rarity"]][ban_view.instance_view[0].parent.banned_brawler[0][1]["Id_Brawler"]]["portrait"]} "
+                f"{data2[ban_view.instance_view[0].parent.banned_brawler[0][2]["Rarity"]][ban_view.instance_view[0].parent.banned_brawler[0][2]["Id_Brawler"]]["portrait"]} "
+                f"\n{ban_view.last_pick.user.nick}'s Bans : "
+                f"{data2[ban_view.instance_view[1].parent.banned_brawler[1][0]["Rarity"]][ban_view.instance_view[1].parent.banned_brawler[1][0]["Id_Brawler"]]["portrait"]} "
+                f"{data2[ban_view.instance_view[1].parent.banned_brawler[1][1]["Rarity"]][ban_view.instance_view[1].parent.banned_brawler[1][1]["Id_Brawler"]]["portrait"]} "
+                f"{data2[ban_view.instance_view[1].parent.banned_brawler[1][2]["Rarity"]][ban_view.instance_view[1].parent.banned_brawler[1][2]["Id_Brawler"]]["portrait"]}"
+            )
+        )
+        await message.edit(embed=test_embed)
+    else:
+        sys.exit("\nSomething unexpected happened.")
+
 
 
 
