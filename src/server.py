@@ -308,11 +308,15 @@ class BanPhase_View(discord.ui.View):
     #     await message.edit(content="The invitation has timed out.", view=None)
     async def stop_ban_phase(self):
         timeout1 = await self.instance_view[0].wait()
+        if(timeout1):
+            await message.edit(content="The invitation has timed out.", view=None)
         timeout2 = await self.instance_view[1].wait()
+        if(timeout2):
+            await message.edit(content="The invitation has timed out.", view=None)
         self.stop()
 
     def update_button_labels(self):
-        self.buttons[0].label = f"Click here {self.first_pick.user.nick} !"
+        self.buttons[0].label = f"Click here {self.first_pick.user.global_name} !"
         self.buttons[1].label = f"Click here {self.last_pick.user.nick} !"
 
         self.buttons[0].callback = self.p1_button_callback
@@ -321,22 +325,26 @@ class BanPhase_View(discord.ui.View):
     async def p1_button_callback(self, interaction: discord.Interaction):
         print(f"{interaction.user.global_name} clicked on the button.")
 
-        if (interaction.user.id == self.first_pick.user.id):
-            await interaction.response.defer(ephemeral=True)
-            self.followup[0] = await interaction.followup.send(embed=self.instance_embed, ephemeral=True, wait=True)
-            self.instance_view[0] = self.Player_View(self, 0, self.followup[0])
-            await self.followup[0].edit(view=self.instance_view[0])
-            await self.instance_view[0].update_view()
+        # if (interaction.user.id == self.first_pick.user.id):
+        await interaction.response.defer(ephemeral=True)
+        self.followup[0] = await interaction.followup.send(embed=self.instance_embed, ephemeral=True, wait=True)
+        self.instance_view[0] = self.Player_View(self, 0, self.followup[0])
+        await self.followup[0].edit(view=self.instance_view[0])
+        await self.instance_view[0].update_view()
+        # else:
+            # await interaction.followup.send(f"Only {player1.user.nick} can click on this button !", ephemeral=True)
 
     async def p2_button_callback(self, interaction: discord.Interaction):
         print(f"{interaction.user.global_name} clicked on the button.")
 
-        if (interaction.user.id == self.first_pick.user.id):
-            await interaction.response.defer(ephemeral=True)
-            self.followup[1] = await interaction.followup.send(embed=self.instance_embed, ephemeral=True, wait=True)
-            self.instance_view[1] = self.Player_View(self, 1, self.followup[1])
-            await self.followup[1].edit(view=self.instance_view[1])
-            await self.instance_view[1].update_view()
+        # if (interaction.user.id == self.last_pick.user.id):
+        await interaction.response.defer(ephemeral=True)
+        self.followup[1] = await interaction.followup.send(embed=self.instance_embed, ephemeral=True, wait=True)
+        self.instance_view[1] = self.Player_View(self, 1, self.followup[1])
+        await self.followup[1].edit(view=self.instance_view[1])
+        await self.instance_view[1].update_view()
+        # else:
+        #     await interaction.followup.send(f"Only {player2.user.nick} can click on this button !", ephemeral=True)
     
     async def timer(self):
         self.clear_items()
@@ -597,8 +605,7 @@ class BanPhase_View(discord.ui.View):
                 )
                 await self.parent.instance_view[self.id_player].message.edit(embed=self.ended_embed, view=None)
                 self.parent.instance_view[self.id_player].stop()
-                if(self.parent.is_ended[0] and self.parent.is_ended[1]):
-                    await self.parent.stop_ban_phase()
+                await self.parent.stop_ban_phase()
 
 
     class Decline_Button(discord.ui.Button):
@@ -717,13 +724,15 @@ async def start_draft(interaction: discord.Interaction, user: discord.Member):
     else:
         sys.exit("\nSomething unexpected happened.")
 
+    await ban_view.stop_ban_phase()
+
     # Attendre que le bouton soit cliqué ou que le timeout soit atteint
-    timeout = await map_view.wait()
+    timeout = await ban_view.wait()
     if(timeout):
         await message.edit(content="The invitation has timed out.", view=None)
-
+    
     # Vue 'Ban' terminé ?
-    if(ban_view.is_ended[0] == 1 and ban_view.is_ended[1] == 1):
+    if(ban_view.is_ended[0] == True and ban_view.is_ended[1] == True):
         await message.edit(view=None)
         test_embed = discord.Embed(
             title=f"═════════════════════════════\n[DRAFT SIMULATION]\n[BAN PHASE]\n═════════════════════════════",
