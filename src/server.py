@@ -46,16 +46,21 @@ class Player():
     @classmethod
     def get_first_player(cls, player1, player2) -> 'Player':
         if player1.has_first_pick == True:
+            print("FIRST PICK == P1")
             return player1
         else:
+            print("FIRST PICK == P2")
             return player2
     
     @classmethod
     def get_last_player(cls, player1, player2) -> 'Player':
         if player1.has_first_pick == False:
+            print("LAST PICK == P1")
             return player1
         else:
+            print("LAST PICK == P2")
             return player2
+            
 
     
 class StartDraft_View(discord.ui.View):
@@ -316,35 +321,37 @@ class BanPhase_View(discord.ui.View):
         self.stop()
 
     def update_button_labels(self):
-        self.buttons[0].label = f"Click here {self.first_pick.user.global_name} !"
-        self.buttons[1].label = f"Click here {self.last_pick.user.nick} !"
+        print(self.last_pick.user.name)
+        print(self.first_pick.user.name)
+        self.buttons[0].label = f"Click here {self.first_pick.user.name} !"
+        self.buttons[1].label = f"Click here {self.last_pick.user.name} !"
 
         self.buttons[0].callback = self.p1_button_callback
         self.buttons[1].callback = self.p2_button_callback
 
     async def p1_button_callback(self, interaction: discord.Interaction):
-        print(f"{interaction.user.global_name} clicked on the button.")
+        print(f"{interaction.user.nick} clicked on the button.")
 
-        # if (interaction.user.id == self.first_pick.user.id):
-        await interaction.response.defer(ephemeral=True)
-        self.followup[0] = await interaction.followup.send(embed=self.instance_embed, ephemeral=True, wait=True)
-        self.instance_view[0] = self.Player_View(self, 0, self.followup[0])
-        await self.followup[0].edit(view=self.instance_view[0])
-        await self.instance_view[0].update_view()
-        # else:
-            # await interaction.followup.send(f"Only {player1.user.nick} can click on this button !", ephemeral=True)
+        if (interaction.user.id == self.first_pick.user.id):
+            await interaction.response.defer(ephemeral=True)
+            self.followup[0] = await interaction.followup.send(embed=self.instance_embed, ephemeral=True, wait=True)
+            self.instance_view[0] = self.Player_View(self, 0, self.followup[0])
+            await self.followup[0].edit(view=self.instance_view[0])
+            await self.instance_view[0].update_view()
+        else:
+            await interaction.followup.send(f"Only {player1.user.nick} can click on this button !", ephemeral=True)
 
     async def p2_button_callback(self, interaction: discord.Interaction):
-        print(f"{interaction.user.global_name} clicked on the button.")
+        print(f"{interaction.user.nick} clicked on the button.")
 
-        # if (interaction.user.id == self.last_pick.user.id):
-        await interaction.response.defer(ephemeral=True)
-        self.followup[1] = await interaction.followup.send(embed=self.instance_embed, ephemeral=True, wait=True)
-        self.instance_view[1] = self.Player_View(self, 1, self.followup[1])
-        await self.followup[1].edit(view=self.instance_view[1])
-        await self.instance_view[1].update_view()
-        # else:
-        #     await interaction.followup.send(f"Only {player2.user.nick} can click on this button !", ephemeral=True)
+        if (interaction.user.id == self.last_pick.user.id):
+            await interaction.response.defer(ephemeral=True)
+            self.followup[1] = await interaction.followup.send(embed=self.instance_embed, ephemeral=True, wait=True)
+            self.instance_view[1] = self.Player_View(self, 1, self.followup[1])
+            await self.followup[1].edit(view=self.instance_view[1])
+            await self.instance_view[1].update_view()
+        else:
+            await interaction.followup.send(f"Only {player2.user.nick} can click on this button !", ephemeral=True)
     
     async def timer(self):
         self.clear_items()
