@@ -78,7 +78,7 @@ class StartDraft_View(discord.ui.View):
             await interaction.message.delete()
             await interaction.response.defer(ephemeral=True)
             await interaction.followup.send("You have rejected the invitation. The message has been deleted.", ephemeral=True)
-
+        
             self.is_ended = False
             self.stop()
         else:
@@ -640,7 +640,7 @@ async def on_ready():
         print(e)
 
 
-async def cf_phase():
+async def coinflip_phase():
     global message, player1, player2
 
     begin_embed = discord.Embed(
@@ -667,9 +667,9 @@ async def cf_phase():
             description=f"🔵{player2.user.mention} has the first pick.\n🔴{player1.user.mention} has the last pick."
         )
 
-    await asyncio.sleep(0)
+    await asyncio.sleep(1)
     await message.edit(content=f"{player1.user.mention} vs {player2.user.mention}", embed=cf_phase_embed)
-    await asyncio.sleep(0)
+    await asyncio.sleep(1)
 
 
 async def set_timer(seconds):
@@ -703,11 +703,11 @@ async def start_draft(interaction: discord.Interaction, user: discord.Member):
     timeout = await view.wait()
     if(timeout):
         await message.edit(content="The invitation has timed out.", view=None)
-
+    
     # Vue 'start_draft' terminé ?
     if(view.is_ended == True):
         global map_view
-
+        await coinflip_phase()
         await message.edit(view=None)
         map_view = ChooseMap_View()
         await message.edit(view=map_view)
