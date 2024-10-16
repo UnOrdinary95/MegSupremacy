@@ -7,8 +7,8 @@ import asyncio
 import random
 from enum import Enum
 from datetime import datetime, timedelta
-from typing import Callable, Optional
 from typing import List, Optional
+
 
 # Définition des intents pour le bot Discord
 intents = discord.Intents.default()
@@ -19,15 +19,15 @@ client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
 # Chemin relatif vers le fichier JSON
-path = os.path.join("..","data","map.json")
-path2 = os.path.join("..", "data", "list_brawlers.json")
+maps_json_path = os.path.join("..","data","maps.json")
+brawlers_json_path = os.path.join("..", "data", "list_brawlers.json")
 
 # Charge les fichiers JSON
-with open(path, "r") as file:
-    data = json.load(file)
+with open(maps_json_path, "r") as file:
+    maps_json = json.load(file)
 
-with open(path2, "r") as file:
-    data2 = json.load(file)
+with open(brawlers_json_path, "r") as file:
+    brawlers_json = json.load(file)
 
 # Message initial
 message: discord.InteractionMessage
@@ -36,44 +36,34 @@ message: discord.InteractionMessage
 class Player():
     def __init__(self, user: discord.Member):
         self.user = user
-        self.coin_flip = self.perform_coin_flip()
         self.has_first_pick = None
-    
-    def perform_coin_flip(self):
-        # Simule un pile ou face, retourne 0 ou 1
-        return random.randint(0, 1)
     
     @classmethod
     def get_first_player(cls, player1, player2) -> 'Player':
         if player1.has_first_pick == True:
-            print("FIRST PICK == P1")
             return player1
         else:
-            print("FIRST PICK == P2")
             return player2
     
     @classmethod
     def get_last_player(cls, player1, player2) -> 'Player':
         if player1.has_first_pick == False:
-            print("LAST PICK == P1")
             return player1
         else:
-            print("LAST PICK == P2")
             return player2
-            
-
     
 class StartDraft_View(discord.ui.View):
     global message, player1, player2
     
-    def __init__(self):
+    def __init__(self, message, player1: Player, player2: Player):
         super().__init__(timeout=None)
+        self.message = message
+        self.player1 = player1
+        self.player2 = player2
         self.is_ended = None
 
     @discord.ui.button(label="Reject", style=discord.ButtonStyle.red)
     async def reject(self, interaction: discord.Interaction, button: discord.ui.Button):
-        print(f"{interaction.user.global_name} clicked on the button.")
-
         if (interaction.user.id == player2.user.id):
             await interaction.message.delete()
             await interaction.response.defer(ephemeral=True)
@@ -147,7 +137,7 @@ class ChooseMap_View(discord.ui.View):
             self.confirm_embed = discord.Embed(
                 description=f"Do you choose {self.selected_map} ?"
             )
-            self.img_path = data[self.selected_gamemode]["maps"][self.map_id]["path"]
+            self.img_path = maps_json[self.selected_gamemode]["maps"][self.map_id]["path"]
             self.img_name = os.path.basename(self.img_path)
             attachments = [discord.File(self.img_path, filename=self.img_name)]
             self.confirm_embed.set_image(url=f"attachment://{self.img_name}")
@@ -160,12 +150,12 @@ class ChooseMap_View(discord.ui.View):
         def __init__(self, parent:'ChooseMap_View'):
             self.parent = parent
             options=[
-                discord.SelectOption(label="Gem Grab", emoji=data["Gem Grab"]["emoji"]),
-                discord.SelectOption(label="Heist", emoji=data["Heist"]["emoji"]),
-                discord.SelectOption(label="Bounty", emoji=data["Bounty"]["emoji"]),
-                discord.SelectOption(label="Brawl Ball", emoji=data["Brawl Ball"]["emoji"]),
-                discord.SelectOption(label="Hot Zone", emoji=data["Hot Zone"]["emoji"]),
-                discord.SelectOption(label="Knockout", emoji=data["Knockout"]["emoji"])
+                discord.SelectOption(label="Gem Grab", emoji=maps_json["Gem Grab"]["emoji"]),
+                discord.SelectOption(label="Heist", emoji=maps_json["Heist"]["emoji"]),
+                discord.SelectOption(label="Bounty", emoji=maps_json["Bounty"]["emoji"]),
+                discord.SelectOption(label="Brawl Ball", emoji=maps_json["Brawl Ball"]["emoji"]),
+                discord.SelectOption(label="Hot Zone", emoji=maps_json["Hot Zone"]["emoji"]),
+                discord.SelectOption(label="Knockout", emoji=maps_json["Knockout"]["emoji"])
             ]
             super().__init__(placeholder="Game Modes", options=options)
 
@@ -187,15 +177,15 @@ class ChooseMap_View(discord.ui.View):
         def __init__(self, parent:'ChooseMap_View'):
             self.parent = parent
             options=[
-                discord.SelectOption(label=data[self.parent.selected_gamemode]["maps"][0]["name"], emoji=data[self.parent.selected_gamemode]["emoji"]),
-                discord.SelectOption(label=data[self.parent.selected_gamemode]["maps"][1]["name"], emoji=data[self.parent.selected_gamemode]["emoji"]),
-                discord.SelectOption(label=data[self.parent.selected_gamemode]["maps"][2]["name"], emoji=data[self.parent.selected_gamemode]["emoji"])
+                discord.SelectOption(label=maps_json[self.parent.selected_gamemode]["maps"][0]["name"], emoji=maps_json[self.parent.selected_gamemode]["emoji"]),
+                discord.SelectOption(label=maps_json[self.parent.selected_gamemode]["maps"][1]["name"], emoji=maps_json[self.parent.selected_gamemode]["emoji"]),
+                discord.SelectOption(label=maps_json[self.parent.selected_gamemode]["maps"][2]["name"], emoji=maps_json[self.parent.selected_gamemode]["emoji"])
             ]
-            super().__init__(placeholder=data[self.parent.selected_gamemode]["placeholder"], options=options)
+            super().__init__(placeholder=maps_json[self.parent.selected_gamemode]["placeholder"], options=options)
         
         def return_id_map(self):
             for id in range(3):
-                if self.values[0] == data[self.parent.selected_gamemode]["maps"][id]["name"]:
+                if self.values[0] == maps_json[self.parent.selected_gamemode]["maps"][id]["name"]:
                     return id
             else:
                 return -1
@@ -412,48 +402,48 @@ class BanPhase_View(discord.ui.View):
                     if(self.parent.state[self.id_player] == self.parent.BanSelectionState.CONFIRM):
                         self.confirm_embed.description=(
                         f"Your Bans : {self.parent.emote_tbd} {self.parent.emote_tbd} {self.parent.emote_tbd}\nDo you want to ban : "
-                        f"{data2[self.parent.selected_rarity[self.id_player]][self.parent.selected_brawler[self.id_player]]["portrait"]} ?"
+                        f"{brawlers_json[self.parent.selected_rarity[self.id_player]][self.parent.selected_brawler[self.id_player]]["portrait"]} ?"
                         )
                 case 2:
                     if(self.parent.state[self.id_player] == self.parent.BanSelectionState.RARITY):
                         self.rarity_embed.description=(
-                        f"Your Bans : {data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} "
+                        f"Your Bans : {brawlers_json[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} "
                         f"{self.parent.emote_tbd} {self.parent.emote_tbd}\nPlease choose a rarity :"
                         )
                     
                     if(self.parent.state[self.id_player] == self.parent.BanSelectionState.BRAWLERS):
                         self.brawler_embed.description=(
-                        f"Your Bans : {data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} "
+                        f"Your Bans : {brawlers_json[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} "
                         f"{self.parent.emote_tbd} {self.parent.emote_tbd}\nPlease choose a brawler :"
                         )
                     
                     if(self.parent.state[self.id_player] == self.parent.BanSelectionState.CONFIRM):
                         self.confirm_embed.description=(
-                        f"Your Bans : {data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} " 
+                        f"Your Bans : {brawlers_json[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} " 
                         f"{self.parent.emote_tbd} {self.parent.emote_tbd}\nDo you want to ban : "
-                        f"{data2[self.parent.selected_rarity[self.id_player]][self.parent.selected_brawler[self.id_player]]["portrait"]} ?"
+                        f"{brawlers_json[self.parent.selected_rarity[self.id_player]][self.parent.selected_brawler[self.id_player]]["portrait"]} ?"
                         )
                 case 1:
                     if(self.parent.state[self.id_player] == self.parent.BanSelectionState.RARITY):
                         self.rarity_embed.description=(
-                        f"Your Bans : {data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} "
-                        f"{data2[self.parent.banned_brawler[self.id_player][1]["Rarity"]][self.parent.banned_brawler[self.id_player][1]["Id_Brawler"]]["portrait"]} "
+                        f"Your Bans : {brawlers_json[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} "
+                        f"{brawlers_json[self.parent.banned_brawler[self.id_player][1]["Rarity"]][self.parent.banned_brawler[self.id_player][1]["Id_Brawler"]]["portrait"]} "
                         f"{self.parent.emote_tbd}\nPlease choose a rarity :"
                         )
                 
                     if(self.parent.state[self.id_player] == self.parent.BanSelectionState.BRAWLERS):
                         self.brawler_embed.description=(
-                        f"Your Bans : {data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} " 
-                        f"{data2[self.parent.banned_brawler[self.id_player][1]["Rarity"]][self.parent.banned_brawler[self.id_player][1]["Id_Brawler"]]["portrait"]} "
+                        f"Your Bans : {brawlers_json[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} " 
+                        f"{brawlers_json[self.parent.banned_brawler[self.id_player][1]["Rarity"]][self.parent.banned_brawler[self.id_player][1]["Id_Brawler"]]["portrait"]} "
                         f"{self.parent.emote_tbd}\nPlease choose a brawler :"
                         )
 
                     if(self.parent.state[self.id_player] == self.parent.BanSelectionState.CONFIRM):
                         self.confirm_embed.description=(
-                        f"Your Bans : {data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} " 
-                        f"{data2[self.parent.banned_brawler[self.id_player][1]["Rarity"]][self.parent.banned_brawler[self.id_player][1]["Id_Brawler"]]["portrait"]} "
+                        f"Your Bans : {brawlers_json[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} " 
+                        f"{brawlers_json[self.parent.banned_brawler[self.id_player][1]["Rarity"]][self.parent.banned_brawler[self.id_player][1]["Id_Brawler"]]["portrait"]} "
                         f"{self.parent.emote_tbd}\nDo you want to ban : " 
-                        f"{data2[self.parent.selected_rarity[self.id_player]][self.parent.selected_brawler[self.id_player]]["portrait"]} ?"
+                        f"{brawlers_json[self.parent.selected_rarity[self.id_player]][self.parent.selected_brawler[self.id_player]]["portrait"]} ?"
                         )
 
         async def update_view(self):
@@ -529,7 +519,7 @@ class BanPhase_View(discord.ui.View):
             self.buttons.clear()
             for id_brawler in range(self.index, self.total_buttons):
                 button = discord.ui.Button(
-                    emoji=data2[self.parent.selected_rarity[self.id_player]][id_brawler]["pin"], 
+                    emoji=brawlers_json[self.parent.selected_rarity[self.id_player]][id_brawler]["pin"], 
                     custom_id=str(id_brawler), 
                     style=discord.ButtonStyle.blurple
                 )
@@ -552,7 +542,7 @@ class BanPhase_View(discord.ui.View):
         async def handle_button_click(self, interaction: discord.Interaction, button: discord.ui.Button):
             await interaction.response.defer(ephemeral=True)
             self.parent.selected_brawler[self.id_player] = int(button.custom_id)
-            print(f"Tu as séléctionner : {data2[self.parent.selected_rarity[self.id_player]][self.parent.selected_brawler[self.id_player]]["name"]}")
+            print(f"Tu as séléctionner : {brawlers_json[self.parent.selected_rarity[self.id_player]][self.parent.selected_brawler[self.id_player]]["name"]}")
             self.parent.state[self.id_player] = self.parent.BanSelectionState.CONFIRM
             await self.parent.instance_view[self.id_player].update_view()
 
@@ -608,7 +598,7 @@ class BanPhase_View(discord.ui.View):
                 self.parent.is_ended[self.id_player] = True
                 self.ended_embed = discord.Embed(
                     title="YOU CAN NOW DISMISS THIS MESSAGE",
-                    description=f"Your Bans : {data2[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} {data2[self.parent.banned_brawler[self.id_player][1]["Rarity"]][self.parent.banned_brawler[self.id_player][1]["Id_Brawler"]]["portrait"]} {data2[self.parent.banned_brawler[self.id_player][2]["Rarity"]][self.parent.banned_brawler[self.id_player][2]["Id_Brawler"]]["portrait"]}"
+                    description=f"Your Bans : {brawlers_json[self.parent.banned_brawler[self.id_player][0]["Rarity"]][self.parent.banned_brawler[self.id_player][0]["Id_Brawler"]]["portrait"]} {brawlers_json[self.parent.banned_brawler[self.id_player][1]["Rarity"]][self.parent.banned_brawler[self.id_player][1]["Id_Brawler"]]["portrait"]} {brawlers_json[self.parent.banned_brawler[self.id_player][2]["Rarity"]][self.parent.banned_brawler[self.id_player][2]["Id_Brawler"]]["portrait"]}"
                 )
                 await self.parent.instance_view[self.id_player].message.edit(embed=self.ended_embed, view=None)
                 self.parent.instance_view[self.id_player].stop()
@@ -640,19 +630,17 @@ async def on_ready():
         print(e)
 
 
-async def coinflip_phase():
-    global message, player1, player2
-
+async def coinflip_phase(message: discord.InteractionMessage, player1: Player, player2: Player):
     begin_embed = discord.Embed(
         description="The draft is about to start, please wait..."
     )
 
     await message.edit(content=f"{player1.user.mention} vs {player2.user.mention}", embed=begin_embed, view=None, attachments=[])
+    await asyncio.sleep(1)
 
-    print(f"Player 1 coin = {player1.coin_flip}")
-    print(f"Player 2 coin = {player2.coin_flip}")
-
-    if(player1.coin_flip == 0):
+    player1_startfirst = random.randint(0,1)
+    
+    if player1_startfirst == 1:
         player1.has_first_pick = True
         player2.has_first_pick = False
 
@@ -684,20 +672,17 @@ async def start_draft(interaction: discord.Interaction, user: discord.Member):
     player1 = Player(user=interaction.user)
     player2 = Player(user=user)
 
-
-    print("PHASE => 'start_draft'")
-    print(f"Player 1 : {player1.user}\nPlayer 2 : {player2.user}")
+    await interaction.response.send_message(content=f"{user.mention}")
+    message = await interaction.original_response()
     
-    ts = set_timer(60)
-
     start_embed = discord.Embed(
         title="Invitation",
         description=f"{interaction.user.mention} wants to practice his drafting skills with you !"
     )
-    view = StartDraft_View()
+    view = StartDraft_View(message, player1, player2)
     ts = await set_timer(60)
-    await interaction.response.send_message(content=f"{user.mention} <t:{ts}:R>" , embed=start_embed, view=view)
-    message = await interaction.original_response()
+    await message.edit(content=f"{user.mention} <t:{ts}:R>" , embed=start_embed, view=view)
+    # message = await interaction.original_response()
 
     # Attendre que le bouton soit cliqué ou que le timeout soit atteint
     timeout = await view.wait()
@@ -707,12 +692,13 @@ async def start_draft(interaction: discord.Interaction, user: discord.Member):
     # Vue 'start_draft' terminé ?
     if(view.is_ended == True):
         global map_view
-        await coinflip_phase()
+        await coinflip_phase(message, player1, player2)
         await message.edit(view=None)
         map_view = ChooseMap_View()
         await message.edit(view=map_view)
         await map_view.update_view()
     elif(view.is_ended == False):
+        return
         sys.exit("\nDraft rejected.")
     else:
         sys.exit("\nSomething unexpected happened.")
@@ -745,13 +731,13 @@ async def start_draft(interaction: discord.Interaction, user: discord.Member):
             title=f"═════════════════════════════\n[DRAFT SIMULATION]\n[BAN PHASE]\n═════════════════════════════",
             description=(
                 f"{ban_view.first_pick.user.nick}'s Bans : "
-                f"{data2[ban_view.instance_view[0].parent.banned_brawler[0][0]["Rarity"]][ban_view.instance_view[0].parent.banned_brawler[0][0]["Id_Brawler"]]["portrait"]} "
-                f"{data2[ban_view.instance_view[0].parent.banned_brawler[0][1]["Rarity"]][ban_view.instance_view[0].parent.banned_brawler[0][1]["Id_Brawler"]]["portrait"]} "
-                f"{data2[ban_view.instance_view[0].parent.banned_brawler[0][2]["Rarity"]][ban_view.instance_view[0].parent.banned_brawler[0][2]["Id_Brawler"]]["portrait"]} "
+                f"{brawlers_json[ban_view.instance_view[0].parent.banned_brawler[0][0]["Rarity"]][ban_view.instance_view[0].parent.banned_brawler[0][0]["Id_Brawler"]]["portrait"]} "
+                f"{brawlers_json[ban_view.instance_view[0].parent.banned_brawler[0][1]["Rarity"]][ban_view.instance_view[0].parent.banned_brawler[0][1]["Id_Brawler"]]["portrait"]} "
+                f"{brawlers_json[ban_view.instance_view[0].parent.banned_brawler[0][2]["Rarity"]][ban_view.instance_view[0].parent.banned_brawler[0][2]["Id_Brawler"]]["portrait"]} "
                 f"\n{ban_view.last_pick.user.nick}'s Bans : "
-                f"{data2[ban_view.instance_view[1].parent.banned_brawler[1][0]["Rarity"]][ban_view.instance_view[1].parent.banned_brawler[1][0]["Id_Brawler"]]["portrait"]} "
-                f"{data2[ban_view.instance_view[1].parent.banned_brawler[1][1]["Rarity"]][ban_view.instance_view[1].parent.banned_brawler[1][1]["Id_Brawler"]]["portrait"]} "
-                f"{data2[ban_view.instance_view[1].parent.banned_brawler[1][2]["Rarity"]][ban_view.instance_view[1].parent.banned_brawler[1][2]["Id_Brawler"]]["portrait"]}"
+                f"{brawlers_json[ban_view.instance_view[1].parent.banned_brawler[1][0]["Rarity"]][ban_view.instance_view[1].parent.banned_brawler[1][0]["Id_Brawler"]]["portrait"]} "
+                f"{brawlers_json[ban_view.instance_view[1].parent.banned_brawler[1][1]["Rarity"]][ban_view.instance_view[1].parent.banned_brawler[1][1]["Id_Brawler"]]["portrait"]} "
+                f"{brawlers_json[ban_view.instance_view[1].parent.banned_brawler[1][2]["Rarity"]][ban_view.instance_view[1].parent.banned_brawler[1][2]["Id_Brawler"]]["portrait"]}"
             )
         )
         await message.edit(embed=test_embed)
