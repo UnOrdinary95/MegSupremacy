@@ -40,21 +40,19 @@ class Player():
     
     @classmethod
     def get_first_player(cls, player1, player2) -> 'Player':
-        if player1.has_first_pick == True:
+        if player1.has_first_pick:
             return player1
         else:
             return player2
     
     @classmethod
     def get_last_player(cls, player1, player2) -> 'Player':
-        if player1.has_first_pick == False:
+        if not player1.has_first_pick:
             return player1
         else:
             return player2
     
 class StartDraft_View(discord.ui.View):
-    global message, player1, player2
-    
     def __init__(self, message, player1: Player, player2: Player):
         super().__init__(timeout=None)
         self.message = message
@@ -64,7 +62,7 @@ class StartDraft_View(discord.ui.View):
 
     @discord.ui.button(label="Reject", style=discord.ButtonStyle.red)
     async def reject(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if (interaction.user.id == player2.user.id):
+        if interaction.user.id == player2.user.id:
             await interaction.message.delete()
             await interaction.response.defer(ephemeral=True)
             await interaction.followup.send("You have rejected the invitation. The message has been deleted.", ephemeral=True)
@@ -79,7 +77,7 @@ class StartDraft_View(discord.ui.View):
     async def accept(self, interaction: discord.Interaction, button: discord.ui.Button):
         print(f"{interaction.user.global_name} clicked on the button.")
 
-        if (interaction.user.id == player2.user.id):
+        if interaction.user.id == player2.user.id:
             await interaction.response.defer()
             
             self.is_ended = True
@@ -97,9 +95,12 @@ class ChooseMap_View(discord.ui.View):
         MAP = 2
         CONFIRM = 3
 
-
-    def __init__(self):
+    def __init__(self, message: discord.InteractionMessage, player1: Player, player2: Player):
         super().__init__(timeout=None)
+        self.message = message
+        self.player1 = player1
+        self.player2 = player2
+
         self.selected_gamemode = ""
         self.selected_map = ""       
         self.map_id = -1                
@@ -117,26 +118,25 @@ class ChooseMap_View(discord.ui.View):
         self.confirm_embed = discord.Embed(
             description=f"Do you choose {self.selected_map} ?"
         )
-        
-    async def update_view(self):
-        self.clear_items()
-        if(self.state == self.MapSelectionState.GAMEMODE):
-            print("'choose_map' state : GAMEMODE")
-
-            self.add_item(self.Gamemode_Select(self))
-            await message.edit(content=f"{player1.user.mention} vs {player2.user.mention}", embed=self.gamemode_embed, view=self, attachments=[])
-        elif(self.state == self.MapSelectionState.MAP):
-            print("'choose_map' state : MAP")
-
-            self.add_item(self.Map_Select(self))
-            self.add_item(self.Return_Button(self))
-            await message.edit(content=f"{player1.user.mention} vs {player2.user.mention}", embed=self.map_embed, view=self, attachments=[])
-        elif(self.state == self.MapSelectionState.CONFIRM):
-            print("'choose_map' state : CONFIRM")
-
-            self.confirm_embed = discord.Embed(
+    
+    async def update_confirm_embed(self):
+        self.confirm_embed = discord.Embed(
                 description=f"Do you choose {self.selected_map} ?"
             )
+
+    async def update_view(self):
+        self.clear_items()
+
+        if self.state == self.MapSelectionState.GAMEMODE:
+            self.add_item(self.Gamemode_Select(self))
+            await message.edit(content=f"{self.player1.user.mention} vs {self.player2.user.mention}", embed=self.gamemode_embed, view=self, attachments=[])
+        elif self.state == self.MapSelectionState.MAP:
+            self.add_item(self.Map_Select(self))
+            self.add_item(self.Return_Button(self))
+            await message.edit(content=f"{self.player1.user.mention} vs {self.player2.user.mention}", embed=self.map_embed, view=self, attachments=[])
+        elif self.state == self.MapSelectionState.CONFIRM:
+            await self.update_confirm_embed()
+            
             self.img_path = maps_json[self.selected_gamemode]["maps"][self.map_id]["path"]
             self.img_name = os.path.basename(self.img_path)
             attachments = [discord.File(self.img_path, filename=self.img_name)]
@@ -144,7 +144,7 @@ class ChooseMap_View(discord.ui.View):
 
             self.add_item(self.Accept_Button(self))
             self.add_item(self.Decline_button(self))
-            await message.edit(content=f"{player1.user.mention} vs {player2.user.mention}", embed=self.confirm_embed, view=self, attachments=attachments)
+            await message.edit(content=f"{self.player1.user.mention} vs {self.player2.user.mention}", embed=self.confirm_embed, view=self, attachments=attachments)
 
     class Gamemode_Select(discord.ui.Select):
         def __init__(self, parent:'ChooseMap_View'):
@@ -640,7 +640,7 @@ async def coinflip_phase(message: discord.InteractionMessage, player1: Player, p
 
     player1_startfirst = random.randint(0,1)
     
-    if player1_startfirst == 1:
+    if player1_startfirst:
         player1.has_first_pick = True
         player2.has_first_pick = False
 
@@ -668,7 +668,7 @@ async def set_timer(seconds):
 
 @tree.command(name="start_draft", description="This is a description...")
 async def start_draft(interaction: discord.Interaction, user: discord.Member):
-    global message, player1, player2
+    # global message, player1, player2
     player1 = Player(user=interaction.user)
     player2 = Player(user=user)
 
@@ -679,29 +679,28 @@ async def start_draft(interaction: discord.Interaction, user: discord.Member):
         title="Invitation",
         description=f"{interaction.user.mention} wants to practice his drafting skills with you !"
     )
-    view = StartDraft_View(message, player1, player2)
+    starting_view = StartDraft_View(message, player1, player2)
     ts = await set_timer(60)
-    await message.edit(content=f"{user.mention} <t:{ts}:R>" , embed=start_embed, view=view)
-    # message = await interaction.original_response()
+    await message.edit(content=f"{user.mention} <t:{ts}:R>" , embed=start_embed, view=starting_view)
 
     # Attendre que le bouton soit cliqué ou que le timeout soit atteint
-    timeout = await view.wait()
-    if(timeout):
+    timeout = await starting_view.wait()
+    if timeout:
         await message.edit(content="The invitation has timed out.", view=None)
     
     # Vue 'start_draft' terminé ?
-    if(view.is_ended == True):
+    if starting_view.is_ended:
         global map_view
         await coinflip_phase(message, player1, player2)
         await message.edit(view=None)
-        map_view = ChooseMap_View()
+        map_view = ChooseMap_View(message, player1, player2)
         await message.edit(view=map_view)
         await map_view.update_view()
-    elif(view.is_ended == False):
+    elif not starting_view.is_ended:
         return
-        sys.exit("\nDraft rejected.")
     else:
-        sys.exit("\nSomething unexpected happened.")
+        print("\nSomething unexpected happened.")
+        return
     
     # Attendre que le bouton soit cliqué ou que le timeout soit atteint
     timeout = await map_view.wait()
