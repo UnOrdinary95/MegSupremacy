@@ -76,8 +76,6 @@ class StartDraft_View(discord.ui.View):
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.green)
     async def accept(self, interaction: discord.Interaction, button: discord.ui.Button):
-        print(f"{interaction.user.global_name} clicked on the button.")
-
         if interaction.user.id == self.player2.user.id:
             await interaction.response.defer()
             
@@ -304,6 +302,7 @@ class BanPhase_View(discord.ui.View):
             await self.followup[0].edit(view=self.instance_view[0])
             await self.instance_view[0].update_view()
         else:
+            await interaction.response.defer(ephemeral=True)
             await interaction.followup.send(f"Only {self.player1.user.nick} can click on this button !", ephemeral=True)
 
     async def p2_button_callback(self, interaction: discord.Interaction):
@@ -314,11 +313,12 @@ class BanPhase_View(discord.ui.View):
             await self.followup[1].edit(view=self.instance_view[1])
             await self.instance_view[1].update_view()
         else:
+            await interaction.response.defer(ephemeral=True)
             await interaction.followup.send(f"Only {self.player2.user.nick} can click on this button !", ephemeral=True)
     
     async def timer(self):
         self.clear_items()
-        self.timestamp = 60
+        self.timestamp = 10
 
         rarity_embed = discord.Embed(
             title=f"═════════════════════════════\n[DRAFT SIMULATION]\n[BAN PHASE]\n═════════════════════════════\n{self.first_pick.user.nick}'s turn in {self.timestamp:02}seconds\n═════════════════════════════",
@@ -330,16 +330,18 @@ class BanPhase_View(discord.ui.View):
         await self.message.edit(embed=rarity_embed, attachments=attachments)
 
         for seconds in range(self.timestamp, -1, -1):
-            # seconds = i
             rarity_embed.title = f"═════════════════════════════\n[DRAFT SIMULATION]\n[BAN PHASE]\n═════════════════════════════\n{self.first_pick.user.nick}'s turn in {seconds:02} seconds\n═════════════════════════════"
-                # description=f"{self.first_pick.user.nick}'s Bans : {self.emote_tbd} {self.emote_tbd} {self.emote_tbd}\n{self.last_pick.user.nick}'s Bans : {self.emote_tbd} {self.emote_tbd} {self.emote_tbd}"
-            # )
-            # attachments = [discord.File(self.map_view.img_path, filename=self.map_view.img_name)]
-            # rarity_embed.set_thumbnail(url=f"attachment://{self.map_view.img_name}")
 
             await self.message.edit(embed=rarity_embed)
             await asyncio.sleep(1)
+            if self.is_ended[0] and self.is_ended[1]:
+                break
+        
+        if not self.is_ended[0] or not self.is_ended[1]:
+            await self.message.edit(content=f"{self.player1.user.mention} & {self.player2.user.mention}, this session has timed out.", embed=None, attachments=[])
             if
+            self.instance_view[0].stop()
+            self.instance_view[1].stop()
 
 
     class Player_View(discord.ui.View):
@@ -692,7 +694,6 @@ async def start_draft(interaction: discord.Interaction, user: discord.Member):
     if(timeout):
         await message.edit(content="The invitation has timed out.", view=None)
 
-    print("OK LES DEUX ONT FINIT !")
     ban_view.stop()
     # # Attendre que le bouton soit cliqué ou que le timeout soit atteint
     # timeout = await ban_view.wait()
@@ -702,7 +703,7 @@ async def start_draft(interaction: discord.Interaction, user: discord.Member):
     # Vue 'Ban' terminé ?
     if ban_view.is_ended[0] and ban_view.is_ended[1]:
         await message.edit(view=None)
-        test_embed = discord.Embed(
+        banned_brawler_embed = discord.Embed(
             title=f"═════════════════════════════\n[DRAFT SIMULATION]\n[BAN PHASE]\n═════════════════════════════",
             description=(
                 f"{ban_view.first_pick.user.nick}'s Bans : "
@@ -715,7 +716,10 @@ async def start_draft(interaction: discord.Interaction, user: discord.Member):
                 f"{brawlers_json[ban_view.instance_view[1].parent.banned_brawler[1][2]["Rarity"]][ban_view.instance_view[1].parent.banned_brawler[1][2]["Id_Brawler"]]["portrait"]}"
             )
         )
-        await message.edit(embed=test_embed)
+        banned_brawler_embed.set_thumbnail(url=f"attachment://{map_view.img_name}")
+        await message.edit(embed=banned_brawler_embed, attachments=[discord.File(map_view.img_path, map_view.img_name)])
+    elif not ban_view.is_ended[0] or not ban_view.is_ended[1]:
+        return
     else:
         print("\nSomething unexpected happened.")
         return
