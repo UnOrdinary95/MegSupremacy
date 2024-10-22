@@ -107,19 +107,20 @@ class ChooseMap_View(discord.ui.View):
         self.is_ended = False
         
         self.gamemode_embed = discord.Embed(
+            title=f"═════════════════════════════\n[DRAFT SIMULATION]\n[GAME MODE]\n═════════════════════════════",
             description="Please choose a game mode :"
         )
         self.map_embed = discord.Embed(
+            title=f"═════════════════════════════\n[DRAFT SIMULATION]\n[MAP]\n═════════════════════════════",
             description="Please choose a map :"
         )
         self.confirm_embed = discord.Embed(
+            title=f"═════════════════════════════\n[DRAFT SIMULATION]\n[CONFIRM]\n═════════════════════════════",
             description=f"Do you choose {self.selected_map} ?"
         )
     
     async def update_confirm_embed(self):
-        self.confirm_embed = discord.Embed(
-                description=f"Do you choose {self.selected_map} ?"
-            )
+        self.confirm_embed.description = f"Do you choose {self.selected_map} ?"
 
     async def update_view(self):
         self.clear_items()
@@ -335,18 +336,15 @@ class BanPhase_View(discord.ui.View):
             await self.message.edit(embed=rarity_embed)
             await asyncio.sleep(1)
             if self.is_ended[0] and self.is_ended[1]:
+                self.stop()
                 break
         
         if not self.is_ended[0] or not self.is_ended[1]:
-            await self.message.edit(content=f"{self.player1.user.mention} & {self.player2.user.mention}, this session has timed out.", embed=None, attachments=[])
-            if
-            self.instance_view[0].stop()
-            self.instance_view[1].stop()
-
+            self.stop()
 
     class Player_View(discord.ui.View):
         def __init__(self, parent: 'BanPhase_View', id_player, followup: discord.InteractionMessage):
-            super().__init__(timeout=None)  # A modifier ?
+            super().__init__(timeout=None)
             self.id_player = id_player
             self.parent = parent
             self.message = followup
@@ -633,8 +631,6 @@ async def coinflip_phase(message: discord.InteractionMessage, player1: Player, p
     await asyncio.sleep(1)
 
 
-
-
 @tree.command(name="start_draft", description="This is a description...")
 async def start_draft(interaction: discord.Interaction, user: discord.Member):
     player1 = Player(user=interaction.user)
@@ -683,22 +679,11 @@ async def start_draft(interaction: discord.Interaction, user: discord.Member):
     else:
         print("\nSomething unexpected happened.")
         return
-
-    # Attendre que le joueur 1 a fini ses bans
-    timeout = await ban_view.instance_view[0].wait()
+    
+    # Attendre que la fin de la phase de draft
+    timeout = await ban_view.wait()
     if(timeout):
         await message.edit(content="The invitation has timed out.", view=None)
-
-    # Attendre que le joueur 2 a fini ses bans
-    timeout = await ban_view.instance_view[1].wait()
-    if(timeout):
-        await message.edit(content="The invitation has timed out.", view=None)
-
-    ban_view.stop()
-    # # Attendre que le bouton soit cliqué ou que le timeout soit atteint
-    # timeout = await ban_view.wait()
-    # if(timeout):
-    #     await message.edit(content="The invitation has timed out.", view=None)
     
     # Vue 'Ban' terminé ?
     if ban_view.is_ended[0] and ban_view.is_ended[1]:
@@ -717,8 +702,10 @@ async def start_draft(interaction: discord.Interaction, user: discord.Member):
             )
         )
         banned_brawler_embed.set_thumbnail(url=f"attachment://{map_view.img_name}")
-        await message.edit(embed=banned_brawler_embed, attachments=[discord.File(map_view.img_path, map_view.img_name)])
+        await message.edit(embed=banned_brawler_embed, attachments=[discord.File(map_view.img_path, map_view.img_name)], view=None)
     elif not ban_view.is_ended[0] or not ban_view.is_ended[1]:
+        
+        await message.edit(content=f"{player1.user.mention} & {player2.user.mention}, this session has timed out.", embed=None, attachments=[], view=None)
         return
     else:
         print("\nSomething unexpected happened.")
