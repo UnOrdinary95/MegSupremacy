@@ -1,5 +1,5 @@
 import os
-import sys
+# import sys
 import json
 import discord
 from discord import app_commands
@@ -8,7 +8,6 @@ import random
 from enum import Enum
 from datetime import datetime, timedelta
 from typing import List, Optional
-
 
 # Définition des intents pour le bot Discord
 intents = discord.Intents.default()
@@ -29,9 +28,6 @@ with open(maps_json_path, "r") as file:
 with open(brawlers_json_path, "r") as file:
     brawlers_json = json.load(file)
 
-# Message initial
-# message: discord.InteractionMessage
-
 
 class Player():
     def __init__(self, user: discord.Member):
@@ -51,6 +47,35 @@ class Player():
             return player1
         else:
             return player2
+        
+    async def coinflip_phase(message: discord.InteractionMessage, player1: 'Player', player2: 'Player'):
+        begin_embed = discord.Embed(
+            description="The draft is about to start, please wait..."
+        )
+
+        await message.edit(content=f"{player1.user.mention} vs {player2.user.mention}", embed=begin_embed, view=None, attachments=[])
+        await asyncio.sleep(1)
+
+        player1_startfirst = random.randint(0,1)
+        
+        if player1_startfirst:
+            player1.has_first_pick = True
+            player2.has_first_pick = False
+
+            cf_phase_embed = discord.Embed(
+                description=f"🔵{player1.user.mention} has the first pick.\n🔴{player2.user.mention} has the last pick."
+            )
+        else:
+            player1.has_first_pick = False
+            player2.has_first_pick = True
+
+            cf_phase_embed = discord.Embed(
+                description=f"🔵{player2.user.mention} has the first pick.\n🔴{player1.user.mention} has the last pick."
+            )
+
+        await asyncio.sleep(1)
+        await message.edit(content=f"{player1.user.mention} vs {player2.user.mention}", embed=cf_phase_embed)
+        await asyncio.sleep(1)
 
 
 class StartDraft_View(discord.ui.View):
@@ -287,8 +312,6 @@ class BanPhase_View(discord.ui.View):
         )
 
     def update_button_labels(self):
-        print(self.last_pick.user.name)
-        print(self.first_pick.user.name)
         self.buttons[0].label = f"Click here {self.first_pick.user.nick} !"
         self.buttons[1].label = f"Click here {self.last_pick.user.nick} !"
 
@@ -601,36 +624,6 @@ async def on_ready():
         print(e)
 
 
-async def coinflip_phase(message: discord.InteractionMessage, player1: Player, player2: Player):
-    begin_embed = discord.Embed(
-        description="The draft is about to start, please wait..."
-    )
-
-    await message.edit(content=f"{player1.user.mention} vs {player2.user.mention}", embed=begin_embed, view=None, attachments=[])
-    await asyncio.sleep(1)
-
-    player1_startfirst = random.randint(0,1)
-    
-    if player1_startfirst:
-        player1.has_first_pick = True
-        player2.has_first_pick = False
-
-        cf_phase_embed = discord.Embed(
-            description=f"🔵{player1.user.mention} has the first pick.\n🔴{player2.user.mention} has the last pick."
-        )
-    else:
-        player1.has_first_pick = False
-        player2.has_first_pick = True
-
-        cf_phase_embed = discord.Embed(
-            description=f"🔵{player2.user.mention} has the first pick.\n🔴{player1.user.mention} has the last pick."
-        )
-
-    await asyncio.sleep(1)
-    await message.edit(content=f"{player1.user.mention} vs {player2.user.mention}", embed=cf_phase_embed)
-    await asyncio.sleep(1)
-
-
 @tree.command(name="start_draft", description="This is a description...")
 async def start_draft(interaction: discord.Interaction, user: discord.Member):
     player1 = Player(user=interaction.user)
@@ -653,8 +646,7 @@ async def start_draft(interaction: discord.Interaction, user: discord.Member):
     
     # Vue 'start_draft' terminé ?
     if starting_view.is_ended:
-        # global map_view
-        await coinflip_phase(message, player1, player2)
+        await Player.coinflip_phase(message, player1, player2)
         await message.edit(view=None)
         map_view = ChooseMap_View(message, player1, player2)
         await message.edit(view=map_view)
@@ -710,61 +702,6 @@ async def start_draft(interaction: discord.Interaction, user: discord.Member):
     else:
         print("\nSomething unexpected happened.")
         return
-
-
-
-@tree.command(name="timer", description="Start a countdown timer")
-async def timer(interaction: discord.Interaction):
-    time = 60
-    timer_embed = discord.Embed(
-        title="Timer",
-        description=f"{time} seconds remaining"
-    )
-    
-    await interaction.response.send_message(embed=timer_embed)
-    msg = await interaction.original_response()
-
-    while time > 0:
-        await asyncio.sleep(0.5)
-        time -= 1
-        # Update only if the time has changed
-        new_embed = discord.Embed(
-            title="Timer",
-            description=f"{time} seconds remaining"
-        )
-        await msg.edit(embed=new_embed)
-
-    # Notify when the timer is done
-    done_embed = discord.Embed(
-        title="Timer",
-        description="Time's up!",
-        color=discord.Color.red()
-    )
-    await msg.edit(embed=done_embed)
-
-@tree.command(name="timer2", description="V2")
-async def timer2(interaction: discord.Interaction):
-    time = 60
-    timer_embed = discord.Embed(
-        description=f"00:01:00"
-    )
-    dt = datetime.now()
-    future_time = dt + timedelta(seconds=60)
-    ts = int(future_time.timestamp())
-
-    await interaction.response.send_message(embed=timer_embed)
-    msg = await interaction.original_response()
-    
-    for x in range(time, 0, -1):
-        seconds = x % 60
-        minutes = int(x / 60) % 60
-        timer_embed = discord.Embed(
-            description=f"**00:{minutes:02}:{seconds:02}**"
-        )
-
-        await msg.edit(embed=timer_embed)
-        await asyncio.sleep(1)
-
 
 # Démarrage du bot avec le token récupéré depuis les variables d'environnement
 client.run(os.getenv("TOKEN"))
