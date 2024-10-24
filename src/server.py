@@ -1,13 +1,14 @@
 import os
-# import sys
 import json
 import discord
 from discord import app_commands
 import asyncio
-import random
 from enum import Enum
-from datetime import datetime, timedelta
 from typing import List, Optional
+
+from models.player import Player
+from views.start_draft import StartDraft_View
+
 
 # Définition des intents pour le bot Discord
 intents = discord.Intents.default()
@@ -27,88 +28,6 @@ with open(maps_json_path, "r") as file:
 
 with open(brawlers_json_path, "r") as file:
     brawlers_json = json.load(file)
-
-
-class Player():
-    def __init__(self, user: discord.Member):
-        self.user = user
-        self.has_first_pick = None
-    
-    @classmethod
-    def get_first_player(cls, player1, player2) -> 'Player':
-        if player1.has_first_pick:
-            return player1
-        else:
-            return player2
-    
-    @classmethod
-    def get_last_player(cls, player1, player2) -> 'Player':
-        if not player1.has_first_pick:
-            return player1
-        else:
-            return player2
-        
-    async def coinflip_phase(message: discord.InteractionMessage, player1: 'Player', player2: 'Player'):
-        begin_embed = discord.Embed(
-            description="The draft is about to start, please wait..."
-        )
-
-        await message.edit(content=f"{player1.user.mention} vs {player2.user.mention}", embed=begin_embed, view=None, attachments=[])
-        await asyncio.sleep(1)
-
-        player1_startfirst = random.randint(0,1)
-        
-        if player1_startfirst:
-            player1.has_first_pick = True
-            player2.has_first_pick = False
-
-            cf_phase_embed = discord.Embed(
-                description=f"🔵{player1.user.mention} has the first pick.\n🔴{player2.user.mention} has the last pick."
-            )
-        else:
-            player1.has_first_pick = False
-            player2.has_first_pick = True
-
-            cf_phase_embed = discord.Embed(
-                description=f"🔵{player2.user.mention} has the first pick.\n🔴{player1.user.mention} has the last pick."
-            )
-
-        await asyncio.sleep(1)
-        await message.edit(content=f"{player1.user.mention} vs {player2.user.mention}", embed=cf_phase_embed)
-        await asyncio.sleep(1)
-
-
-class StartDraft_View(discord.ui.View):
-    def __init__(self, message, player1: Player, player2: Player):
-        super().__init__(timeout=None)
-        self.message = message
-        self.player1 = player1
-        self.player2 = player2
-        self.is_ended = None
-
-    @discord.ui.button(label="Reject", style=discord.ButtonStyle.red)
-    async def reject(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id == self.player2.user.id:
-            await interaction.message.delete()
-            await interaction.response.defer(ephemeral=True)
-            await interaction.followup.send("You have rejected the invitation. The message has been deleted.", ephemeral=True)
-        
-            self.is_ended = False
-            self.stop()
-        else:
-            await interaction.response.defer(ephemeral=True)
-            await interaction.followup.send(f"Only {self.player2.user.nick} can click on this button !", ephemeral=True)
-
-    @discord.ui.button(label="Accept", style=discord.ButtonStyle.green)
-    async def accept(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id == self.player2.user.id:
-            await interaction.response.defer()
-            
-            self.is_ended = True
-            self.stop()
-        else:
-            await interaction.response.defer(ephemeral=True)
-            await interaction.followup.send(f"Only {self.player2.user.nick} can click on this button !", ephemeral=True)
 
 
 class ChooseMap_View(discord.ui.View):
