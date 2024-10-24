@@ -2,3 +2,7 @@
 .env
 
 sample_copy/
+
+__pycache__/
+*.pyc
+*.pyo
