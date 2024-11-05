@@ -1,4 +1,5 @@
 import discord
+
 from models.player import Player
 
 class StartDraft_View(discord.ui.View):
