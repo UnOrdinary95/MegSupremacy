@@ -9,7 +9,7 @@ This project is a discord bot implemented in Python and utilizes the discord.py 
 
 ## Project Overview
 
-Meg's Supremacy is a discord bot that simulates the drafting experience (Pick & Bans) of Brawl Stars (a mobile game) and determines the winner through a community poll.
+Meg's Supremacy is a discord bot that simulates the drafting experience (Pick & Bans) of Brawl Stars (a mobile game) and determines the winner through a community poll. Created for the pleasure of coding.
 
 ## How Pick & Bans works
 
