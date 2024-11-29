@@ -74,7 +74,7 @@ This adds a layer of complexity and tactical depth to the game, making it more e
 To compile and run this project, follow these steps :
 1. Clone the repository using `git clone` or Download ZIP.
 2. Activate the virtual environnement.
-2. Navigate to the project directory using `cd Meg's_Supremacy/src`.
+2. Navigate to the project directory using `cd MegSupremacy/src`.
 3. Compile the project using :
 
 ```
