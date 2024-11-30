@@ -83,7 +83,7 @@ py server.py
 
 ## Status Update
 
-It's been a while since I play Brawl Stars but I am going to finish my project one day for sure.
+I've been busy with school and haven't played Brawl Stars in a while, but I’ll definitely finish my project someday.
 
 The banning phase is soon completed, it need some fixes (We can pick the same character,...)
 
